@@ -17,6 +17,9 @@ export class App extends Component<{}, { chats: any; trades: any }> {
             .then((r) => r.json())
             .then((j) => {
                 this.setState({ trades: j });
+            })
+            .catch(() => {
+                this.setState({ trades: {} });
             });
     };
 

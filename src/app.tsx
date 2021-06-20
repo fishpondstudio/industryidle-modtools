@@ -142,35 +142,43 @@ export class App extends Component<{}, { chats: any; trades: any }> {
                                     {Math.round((Date.now() - trade.createdAt) / 100 / 60) / 10}m ago
                                 </td>
                                 <td className="nowrap text-right">
-                                    <button onClick={() => navigator.clipboard.writeText(trade.fromUserId)}>
+                                    <button
+                                        onClick={() => navigator.clipboard.writeText(trade.fromUserId)}
+                                        title={trade.fromIp}
+                                    >
                                         Copy
                                     </button>{" "}
-                                    <button onClick={this.ban.bind(this, "banTrade", 0, trade.fromIp)}>0</button>{" "}
+                                    <button onClick={this.ban.bind(this, "banTrade", 0, { [trade.fromIp]: 1 })}>
+                                        0
+                                    </button>{" "}
                                     <button
-                                        onClick={this.ban.bind(this, "banTrade", 24 * 60 * 60 * 1000, trade.fromIp)}
+                                        onClick={this.ban.bind(this, "banTrade", 24 * 60 * 60 * 1000, {
+                                            [trade.fromIp]: 1,
+                                        })}
                                     >
                                         1d
                                     </button>{" "}
                                     <button
-                                        onClick={this.ban.bind(this, "banTrade", 7 * 24 * 60 * 60 * 1000, trade.fromIp)}
+                                        onClick={this.ban.bind(this, "banTrade", 7 * 24 * 60 * 60 * 1000, {
+                                            [trade.fromIp]: 1,
+                                        })}
                                     >
                                         1w
                                     </button>{" "}
                                     <button
-                                        onClick={this.ban.bind(
-                                            this,
-                                            "banTrade",
-                                            30 * 24 * 60 * 60 * 1000,
-                                            trade.fromIp
-                                        )}
+                                        onClick={this.ban.bind(this, "banTrade", 30 * 24 * 60 * 60 * 1000, {
+                                            [trade.fromIp]: 1,
+                                        })}
                                     >
                                         1mo
                                     </button>{" "}
                                     <button onClick={this.deleteTrade.bind(this, trade.fromUserId)}>Delete</button>
                                     <div class="red bold text-right">
-                                        {hasBan?.[k]?.banTrade
+                                        {hasBan?.[trade.fromUserId]?.banTrade
                                             ? `${
-                                                  Math.round((hasBan?.[k]?.banTrade - Date.now()) / 100 / 60) / 10
+                                                  Math.round(
+                                                      (hasBan?.[trade.fromUserId]?.banTrade - Date.now()) / 100 / 60
+                                                  ) / 10
                                               }m Left`
                                             : ""}
                                     </div>

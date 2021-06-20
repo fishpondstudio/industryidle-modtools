@@ -34,6 +34,10 @@ th {
     background: #f4f4f4;
 }
 
+tr:hover {
+    background: #ffeaa7;
+}
+
 td,
 th {
     padding: 2px 5px;

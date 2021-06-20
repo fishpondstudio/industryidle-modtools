@@ -116,13 +116,13 @@ export class App extends Component<{}, { chats: any; trades: any }> {
                                 <td>{trade.side}</td>
                                 <td>{trade.from}</td>
                                 <td>{trade.resource}</td>
-                                <td className={trade.amount > 1e9 ? "red text-right" : "text-right"}>
+                                <td className={trade.amount > 1e12 ? "red text-right" : "text-right"}>
                                     {trade.amount} ({nf(trade.amount)})
                                 </td>
                                 <td className="text-right">
                                     {trade.price} ({nf(trade.price)})
                                 </td>
-                                <td className={value > 1e12 ? "text-right red" : "text-right"}>
+                                <td className={value > 1e15 ? "text-right red" : "text-right"}>
                                     {value} ({nf(value)})
                                 </td>
                                 <td className={quota > 0.01 ? "red text-right" : "text-right"}>

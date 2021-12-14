@@ -33,12 +33,15 @@ export class App extends Component<
             });
 
         fetch(`${API_HOST}/config?token=${getUrlParams()?.token}`)
-            .then((r) => r.text())
+            .then((r) => {
+                if (r.status === 200) {
+                    return r.text();
+                } else {
+                    throw new Error(r.status + " " + r.statusText);
+                }
+            })
             .then((j) => {
                 this.setState({ config: j });
-            })
-            .catch(() => {
-                this.setState({ config: "" });
             });
     };
 
@@ -63,48 +66,47 @@ export class App extends Component<
         const hasChat = this.state.chats.hasChat;
         const hasBan = this.state.chats.hasBan;
         const trades = this.state.trades;
+        let config;
+        if (this.state.config) {
+            config = (
+                <>
+                    <a target="_blank" href={`${API_HOST}/config-live?token=${getUrlParams()?.token}`}>
+                        Live Config
+                    </a>
+                    <textarea
+                        class="edit-config"
+                        onBlur={(e) => {
+                            const value = (e.target as HTMLTextAreaElement).value.replaceAll("\n", "\r\n");
+                            if (this.state.config !== value && confirm("Save your edit?")) {
+                                fetch(`${API_HOST}/config?token=${getUrlParams()?.token}`, {
+                                    method: "post",
+                                    body: value,
+                                    headers: { "Content-Type": "text/plain" },
+                                })
+                                    .then(() => {
+                                        this.setState({ config: value });
+                                        alert("Saved!");
+                                    })
+                                    .catch(() =>
+                                        this.setState({
+                                            config: this.state.config,
+                                        })
+                                    );
+                            } else {
+                                this.setState({
+                                    config: this.state.config,
+                                });
+                            }
+                        }}
+                    >
+                        {this.state.config}
+                    </textarea>
+                </>
+            );
+        }
         return (
             <>
-                <table>
-                    <tr>
-                        <th></th>
-                        <th>Name</th>
-                        <th>Time</th>
-                        <th>Content</th>
-                        <th class="text-right">Ban Chat</th>
-                    </tr>
-                    {Object.keys(hasChat).map((k) => {
-                        return (
-                            <tr>
-                                <td class="text-right">
-                                    [{hasChat[k].message.flag.toUpperCase()}]{hasChat[k].message.dlc ? "[DLC]" : ""}
-                                </td>
-                                <td>{hasChat[k].message.user}</td>
-                                <td>{new Date(hasChat[k].message.time).toLocaleString()}</td>
-                                <td>{hasChat[k].message.message}</td>
-                                <td class="nowrap text-right">
-                                    <button onClick={this.ban.bind(this, "banChat", 0, hasChat[k].ip)}>0m</button>{" "}
-                                    <button onClick={this.ban.bind(this, "banChat", 5 * 60 * 1000, hasChat[k].ip)}>
-                                        5m
-                                    </button>{" "}
-                                    <button onClick={this.ban.bind(this, "banChat", 30 * 60 * 1000, hasChat[k].ip)}>
-                                        30m
-                                    </button>{" "}
-                                    <button
-                                        onClick={this.ban.bind(this, "banChat", 24 * 60 * 60 * 1000, hasChat[k].ip)}
-                                    >
-                                        24h
-                                    </button>
-                                    <div class="red bold">
-                                        {hasBan?.[k]?.banChat
-                                            ? `${Math.round((hasBan?.[k]?.banChat - Date.now()) / 100 / 60) / 10}m Left`
-                                            : ""}
-                                    </div>
-                                </td>
-                            </tr>
-                        );
-                    })}
-                </table>
+                {config}
                 <table>
                     <tr>
                         <th>Side</th>
@@ -206,38 +208,46 @@ export class App extends Component<
                         );
                     })}
                 </table>
-                <textarea
-                    class="edit-config"
-                    onBlur={(e) => {
-                        const value = (e.target as HTMLTextAreaElement).value.replaceAll("\n", "\r\n");
-                        if (this.state.config !== value && confirm("Save your edit?")) {
-                            fetch(`${API_HOST}/config?token=${getUrlParams()?.token}`, {
-                                method: "post",
-                                body: value,
-                                headers: { "Content-Type": "text/plain" },
-                            })
-                                .then(() => {
-                                    this.setState({ config: value });
-                                    alert("Saved!");
-                                })
-                                .catch(() =>
-                                    this.setState({
-                                        config: this.state.config,
-                                    })
-                                );
-                        } else {
-                            this.setState({
-                                config: this.state.config,
-                            });
-                        }
-                    }}
-                >
-                    {this.state.config}
-                </textarea>
-
-                <a target="_blank" href={`${API_HOST}/config-live?token=${getUrlParams()?.token}`}>
-                    Live Config
-                </a>
+                <table>
+                    <tr>
+                        <th></th>
+                        <th>Name</th>
+                        <th>Time</th>
+                        <th>Content</th>
+                        <th class="text-right">Ban Chat</th>
+                    </tr>
+                    {Object.keys(hasChat).map((k) => {
+                        return (
+                            <tr>
+                                <td class="text-right">
+                                    [{hasChat[k].message.flag.toUpperCase()}]{hasChat[k].message.dlc ? "[DLC]" : ""}
+                                </td>
+                                <td>{hasChat[k].message.user}</td>
+                                <td>{new Date(hasChat[k].message.time).toLocaleString()}</td>
+                                <td>{hasChat[k].message.message}</td>
+                                <td class="nowrap text-right">
+                                    <button onClick={this.ban.bind(this, "banChat", 0, hasChat[k].ip)}>0m</button>{" "}
+                                    <button onClick={this.ban.bind(this, "banChat", 5 * 60 * 1000, hasChat[k].ip)}>
+                                        5m
+                                    </button>{" "}
+                                    <button onClick={this.ban.bind(this, "banChat", 30 * 60 * 1000, hasChat[k].ip)}>
+                                        30m
+                                    </button>{" "}
+                                    <button
+                                        onClick={this.ban.bind(this, "banChat", 24 * 60 * 60 * 1000, hasChat[k].ip)}
+                                    >
+                                        24h
+                                    </button>
+                                    <div class="red bold">
+                                        {hasBan?.[k]?.banChat
+                                            ? `${Math.round((hasBan?.[k]?.banChat - Date.now()) / 100 / 60) / 10}m Left`
+                                            : ""}
+                                    </div>
+                                </td>
+                            </tr>
+                        );
+                    })}
+                </table>
             </>
         );
     }

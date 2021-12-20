@@ -48,6 +48,10 @@ th {
     border: 1px solid #eee;
 }
 
+.pointer {
+    cursor: pointer;
+}
+
 .nowrap {
     white-space: nowrap;
 }

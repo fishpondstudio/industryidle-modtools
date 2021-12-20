@@ -74,7 +74,7 @@ export class LeaderboardPage extends Component<{}, { leaderboards: { updatedAt: 
                 </tr>
                 {this.state.leaderboards[0].data.map((d) => {
                     return (
-                        <tr>
+                        <tr onClick={() => navigator.clipboard.writeText(d._id ?? "")}>
                             <td className={d.dlc ? "" : "bold"}>{d.userName}</td>
                             {this.state.leaderboards.map((l, index) => {
                                 const current = idx[index][d._id ?? d.userName] ?? idx[index][d.userName];

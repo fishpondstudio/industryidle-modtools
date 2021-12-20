@@ -1,14 +1,15 @@
 import { Component } from "preact";
 import { ChatPage } from "./ChatPage";
 import { ConfigPage } from "./ConfigPage";
+import { LeaderboardPage } from "./LeaderboardPage";
 import { TradePage } from "./TradePage";
 
-type Page = typeof ChatPage | typeof ConfigPage | typeof TradePage;
+type Page = typeof ChatPage | typeof ConfigPage | typeof TradePage | typeof LeaderboardPage;
 
 export class App extends Component<{}, { page: Page }> {
     constructor() {
         super();
-        this.setState({ page: ChatPage });
+        this.state = { page: ChatPage };
     }
 
     render() {
@@ -32,6 +33,12 @@ export class App extends Component<{}, { page: Page }> {
                         onClick={() => this.setState({ page: ConfigPage })}
                     >
                         Config
+                    </button>
+                    <button
+                        class={this.state.page === LeaderboardPage ? "active" : ""}
+                        onClick={() => this.setState({ page: LeaderboardPage })}
+                    >
+                        Leaderboard
                     </button>
                 </div>
                 <this.state.page />

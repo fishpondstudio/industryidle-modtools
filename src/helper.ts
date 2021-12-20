@@ -1,3 +1,5 @@
+import { API_HOST } from "./Constants";
+
 export function getUrlParams(): Record<string, string> {
     const query = location.search.substr(1);
     const result: Record<string, string> = {};
@@ -25,4 +27,12 @@ export function nf(num: number): string {
         return num.toLocaleString() + NUMBER_SUFFIX_1[idx];
     }
     return num.toLocaleString() + "E" + idx;
+}
+
+export function banIp(type: "banChat" | "banTrade", time: number, ip: Record<string, number>): Promise<Response[]> {
+    return Promise.all(
+        Object.keys(ip).map((ip) =>
+            fetch(`${API_HOST}/stat?token=${getUrlParams()?.token}&ip=${ip}&${type}=${time}&update`)
+        )
+    );
 }

@@ -2,7 +2,7 @@ import { Component } from "preact";
 import { getUrlParams, nf } from "./Helper";
 
 interface ILeaderboard {
-    _id?: string;
+    _id: string;
     allPrestigeCurrency: number;
     buildingCount: number;
     buildingValuation: number;
@@ -16,7 +16,10 @@ interface ILeaderboard {
     userName: string;
 }
 
-export class LeaderboardPage extends Component<{}, { leaderboards: { updatedAt: number; data: ILeaderboard[] }[] }> {
+export class LeaderboardPage extends Component<
+    {},
+    { leaderboards: { _id: string; _rev: string; updatedAt: number; data: ILeaderboard[] }[] }
+> {
     constructor() {
         super();
         this.loadData();
@@ -44,6 +47,19 @@ export class LeaderboardPage extends Component<{}, { leaderboards: { updatedAt: 
             });
     }
 
+    async deleteLeaderboard(id: string, rev: string) {
+        fetch(`https://couchdb-de.fishpondstudio.com/industryidle_lblog/${id}?rev=${rev}`, {
+            headers: { Authorization: `Basic ${btoa(getUrlParams()?.couchdb)}`, "Content-Type": "application/json" },
+            method: "delete",
+        }).then((r) => {
+            if (r.status === 200) {
+                this.loadData();
+            } else {
+                throw new Error(r.status + " " + r.statusText);
+            }
+        });
+    }
+
     render() {
         if (!this.state.leaderboards) {
             return;
@@ -56,7 +72,7 @@ export class LeaderboardPage extends Component<{}, { leaderboards: { updatedAt: 
                 idx[index] = {};
             }
             l.data.forEach((f, i) => {
-                idx[index][f._id ?? f.userName] = [f.userName, f.resourceValuation + f.buildingValuation, i + 1];
+                idx[index][f._id] = [f.userName, f.resourceValuation + f.buildingValuation, i + 1];
             });
         });
 
@@ -66,7 +82,15 @@ export class LeaderboardPage extends Component<{}, { leaderboards: { updatedAt: 
                     <th></th>
                     {this.state.leaderboards.map((d) => {
                         return (
-                            <th colSpan={2} class="text-center">
+                            <th
+                                colSpan={2}
+                                class="text-center pointer"
+                                onClick={() => {
+                                    if (window.confirm(`Do you want to delete ${d._id} (rev: ${d._rev})`)) {
+                                        this.deleteLeaderboard(d._id, d._rev);
+                                    }
+                                }}
+                            >
                                 -{Math.floor((10 * (Date.now() - d.updatedAt)) / (1000 * 60 * 60)) / 10}h
                             </th>
                         );
@@ -82,10 +106,8 @@ export class LeaderboardPage extends Component<{}, { leaderboards: { updatedAt: 
                                 {d.userName}
                             </td>
                             {this.state.leaderboards.map((l, index) => {
-                                const current = idx[index][d._id ?? d.userName] ?? idx[index][d.userName];
-                                const prev = idx[index + 1]
-                                    ? idx[index + 1][d._id ?? d.userName] ?? idx[index + 1][d.userName]
-                                    : null;
+                                const current = idx[index][d._id];
+                                const prev = idx[index + 1] ? idx[index + 1][d._id] : null;
                                 return (
                                     <>
                                         <td

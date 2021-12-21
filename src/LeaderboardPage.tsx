@@ -16,6 +16,13 @@ interface ILeaderboard {
     userName: string;
 }
 
+interface IUserItem {
+    userName: string;
+    valuation: number;
+    rank: number;
+    allPrestigeCurrency: number;
+}
+
 export class LeaderboardPage extends Component<
     {},
     { leaderboards: { _id: string; _rev: string; updatedAt: number; data: ILeaderboard[] }[] }
@@ -32,7 +39,7 @@ export class LeaderboardPage extends Component<
             body: JSON.stringify({
                 selector: {},
                 sort: [{ updatedAt: "desc" }],
-                limit: 15,
+                limit: 20,
             }),
         })
             .then((r) => {
@@ -65,14 +72,20 @@ export class LeaderboardPage extends Component<
             return;
         }
 
-        const idx: Record<number, Record<string, [string, number, number]>> = {};
+        const idx: Record<number, Record<string, IUserItem>> = {};
 
         this.state.leaderboards.forEach((l, index) => {
             if (!idx[index]) {
                 idx[index] = {};
             }
             l.data.forEach((f, i) => {
-                idx[index][f._id] = [f.userName, f.resourceValuation + f.buildingValuation, i + 1];
+                idx[index][f._id] = {
+                    userName: f.userName,
+                    valuation: f.resourceValuation + f.buildingValuation,
+                    allPrestigeCurrency: f.allPrestigeCurrency,
+                    rank: i + 1,
+                };
+                [f.userName, f.resourceValuation + f.buildingValuation, i + 1];
             });
         });
 
@@ -83,8 +96,7 @@ export class LeaderboardPage extends Component<
                     {this.state.leaderboards.map((d) => {
                         return (
                             <th
-                                colSpan={2}
-                                class="text-center pointer"
+                                class="text-right pointer"
                                 onClick={() => {
                                     if (window.confirm(`Do you want to delete ${d._id} (rev: ${d._rev})`)) {
                                         this.deleteLeaderboard(d._id, d._rev);
@@ -111,22 +123,22 @@ export class LeaderboardPage extends Component<
                                 return (
                                     <>
                                         <td
+                                            title={
+                                                current
+                                                    ? `Rank: ${nf(current.rank)}, Swiss Money: ${nf(
+                                                          current.allPrestigeCurrency
+                                                      )}`
+                                                    : "N/A"
+                                            }
                                             class={
-                                                current && prev && Math.abs(current[1] - prev[1]) / prev[1] > 0.1
+                                                current &&
+                                                prev &&
+                                                Math.abs(current.valuation - prev.valuation) / prev.valuation > 0.1
                                                     ? "text-right red"
                                                     : "text-right"
                                             }
                                         >
-                                            {current ? nf(current[1]) : ""}
-                                        </td>
-                                        <td
-                                            class={
-                                                current && prev && Math.abs(current[2] - prev[2]) > 5
-                                                    ? "text-right red"
-                                                    : "text-right"
-                                            }
-                                        >
-                                            {current ? nf(current[2]) : ""}
+                                            {current ? nf(current.valuation) : ""}
                                         </td>
                                     </>
                                 );

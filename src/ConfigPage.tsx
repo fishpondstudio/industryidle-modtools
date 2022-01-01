@@ -1,10 +1,6 @@
 import { Component } from "preact";
 import { API_HOST } from "./Constants";
 import { getUrlParams } from "./Helper";
-import _cm1 from "codemirror/codemirror.css";
-import _cm2 from "codemirror/codemirror.js";
-import _cm3 from "codemirror/sublime.js";
-import _cm4 from "codemirror/yaml.js";
 
 export class ConfigPage extends Component<
   {},

@@ -33,6 +33,10 @@ export class ConfigPage extends Component<
         mode: "yaml",
         keyMap: "sublime",
         lineNumbers: true,
+        indentUnit: 4,
+        smartIndent: false,
+        tabSize: 4,
+        indentWithTabs: false,
       });
     }
   }

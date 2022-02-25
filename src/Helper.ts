@@ -1,13 +1,13 @@
 import { API_HOST } from "./Constants";
 
 export function getUrlParams(): Record<string, string> {
-  const query = location.search.substr(1);
-  const result: Record<string, string> = {};
-  query.split("&").forEach((part) => {
-    const item = part.split("=");
-    result[item[0]] = decodeURIComponent(item[1]);
-  });
-  return result;
+    const query = location.search.substr(1);
+    const result: Record<string, string> = {};
+    query.split("&").forEach((part) => {
+        const item = part.split("=");
+        result[item[0]] = decodeURIComponent(item[1]);
+    });
+    return result;
 }
 
 // prettier-ignore
@@ -17,30 +17,30 @@ const NUMBER_SUFFIX_1 = ["", "K", "M", "B", "T", "Qa", "Qt", "Sx", "Sp", "Oc", "
     "NnQq", "Sg"];
 
 export function nf(num: number): string {
-  let idx = 0;
-  while (Math.abs(num) >= 1000) {
-    num /= 1000;
-    idx++;
-  }
-  num = Math.round(num * 100) / 100;
-  if (idx < NUMBER_SUFFIX_1.length) {
-    return num.toLocaleString() + NUMBER_SUFFIX_1[idx];
-  }
-  return num.toLocaleString() + "E" + idx;
+    let idx = 0;
+    while (Math.abs(num) >= 1000) {
+        num /= 1000;
+        idx++;
+    }
+    num = Math.round(num * 100) / 100;
+    if (idx < NUMBER_SUFFIX_1.length) {
+        return num.toLocaleString() + NUMBER_SUFFIX_1[idx];
+    }
+    return num.toLocaleString() + "E" + idx;
 }
 
 export function banIp(
-  type: "banChat" | "banTrade",
-  time: number,
-  ip: Record<string, number>
+    type: "banChat" | "banTrade",
+    time: number,
+    ip: Record<string, number>
 ): Promise<Response[]> {
-  return Promise.all(
-    Object.keys(ip).map((ip) =>
-      fetch(
-        `${API_HOST}/stat?token=${
-          getUrlParams()?.token
-        }&ip=${ip}&${type}=${time}&update`
-      )
-    )
-  );
+    return Promise.all(
+        Object.keys(ip).map((ip) =>
+            fetch(
+                `${API_HOST}/stat?token=${
+                    getUrlParams()?.token
+                }&ip=${ip}&${type}=${time}&update`
+            )
+        )
+    );
 }

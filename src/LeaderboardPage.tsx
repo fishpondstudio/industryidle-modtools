@@ -32,29 +32,29 @@ export class LeaderboardPage extends Component<
             updatedAt: number;
             data: ILeaderboard[];
         }[];
+        userData: any;
     }
 > {
+    private dialog: HTMLDialogElement | null;
+
     constructor() {
         super();
         this.loadData();
     }
 
     async loadData() {
-        fetch(
-            `https://couchdb-de.fishpondstudio.com/industryidle_lblog/_find`,
-            {
-                headers: {
-                    Authorization: `Basic ${btoa(getUrlParams()?.couchdb)}`,
-                    "Content-Type": "application/json",
-                },
-                method: "post",
-                body: JSON.stringify({
-                    selector: {},
-                    sort: [{ updatedAt: "desc" }],
-                    limit: 20,
-                }),
-            }
-        )
+        fetch(`https://couchdb-de.fishpondstudio.com/industryidle_lblog/_find`, {
+            headers: {
+                Authorization: `Basic ${btoa(getUrlParams()?.couchdb)}`,
+                "Content-Type": "application/json",
+            },
+            method: "post",
+            body: JSON.stringify({
+                selector: {},
+                sort: [{ updatedAt: "desc" }],
+                limit: 20,
+            }),
+        })
             .then((r) => {
                 if (r.status === 200) {
                     return r.json();
@@ -68,16 +68,13 @@ export class LeaderboardPage extends Component<
     }
 
     async deleteLeaderboard(id: string, rev: string) {
-        fetch(
-            `https://couchdb-de.fishpondstudio.com/industryidle_lblog/${id}?rev=${rev}`,
-            {
-                headers: {
-                    Authorization: `Basic ${btoa(getUrlParams()?.couchdb)}`,
-                    "Content-Type": "application/json",
-                },
-                method: "delete",
-            }
-        ).then((r) => {
+        fetch(`https://couchdb-de.fishpondstudio.com/industryidle_lblog/${id}?rev=${rev}`, {
+            headers: {
+                Authorization: `Basic ${btoa(getUrlParams()?.couchdb)}`,
+                "Content-Type": "application/json",
+            },
+            method: "delete",
+        }).then((r) => {
             if (r.status === 200) {
                 this.loadData();
             } else {
@@ -108,86 +105,112 @@ export class LeaderboardPage extends Component<
             });
         });
 
+        const tools = (
+            <>
+                <button
+                    onClick={async () => {
+                        this.state.userData.optOut = true;
+                        const r = await fetch(
+                            `https://couchdb-de.fishpondstudio.com/industryidle_ticks/${this.state.userData._id}`,
+                            {
+                                headers: {
+                                    Authorization: `Basic ${btoa(getUrlParams()?.couchdb)}`,
+                                    "Content-Type": "application/json",
+                                },
+                                body: JSON.stringify(this.state.userData),
+                                method: "put",
+                            }
+                        );
+                        this.dialog?.close();
+                        alert(`${r.status} ${r.statusText}`);
+                    }}
+                >
+                    Opt Out
+                </button>{" "}
+                <button onClick={() => this.dialog.close()}>Close</button>
+            </>
+        );
+
         return (
-            <table>
-                <tr>
-                    <th></th>
-                    {this.state.leaderboards.map((d) => {
+            <>
+                <dialog ref={(ref) => (this.dialog = ref)}>
+                    {tools}
+                    <pre>{JSON.stringify(this.state.userData, null, 4)}</pre>
+                    {tools}
+                </dialog>
+                <table>
+                    <tr>
+                        <th></th>
+                        {this.state.leaderboards.map((d) => {
+                            return (
+                                <th
+                                    class="text-right pointer"
+                                    onClick={() => {
+                                        if (window.confirm(`Do you want to delete ${d._id} (rev: ${d._rev})`)) {
+                                            this.deleteLeaderboard(d._id, d._rev);
+                                        }
+                                    }}
+                                >
+                                    -{Math.floor((10 * (Date.now() - d.updatedAt)) / (1000 * 60 * 60)) / 10}h
+                                </th>
+                            );
+                        })}
+                    </tr>
+                    {this.state.leaderboards[0].data.map((d) => {
                         return (
-                            <th
-                                class="text-right pointer"
-                                onClick={() => {
-                                    if (
-                                        window.confirm(
-                                            `Do you want to delete ${d._id} (rev: ${d._rev})`
-                                        )
-                                    ) {
-                                        this.deleteLeaderboard(d._id, d._rev);
-                                    }
-                                }}
-                            >
-                                -
-                                {Math.floor(
-                                    (10 * (Date.now() - d.updatedAt)) /
-                                        (1000 * 60 * 60)
-                                ) / 10}
-                                h
-                            </th>
+                            <tr>
+                                <td
+                                    className={d.dlc ? "pointer" : "pointer bold"}
+                                    onClick={async () => {
+                                        const r = await fetch(
+                                            `https://couchdb-de.fishpondstudio.com/industryidle_ticks/${d._id}`,
+                                            {
+                                                headers: {
+                                                    Authorization: `Basic ${btoa(getUrlParams()?.couchdb)}`,
+                                                    "Content-Type": "application/json",
+                                                },
+                                                method: "get",
+                                            }
+                                        );
+                                        const j = await r.json();
+                                        this.setState({ userData: j });
+                                        // @ts-expect-error
+                                        this.dialog?.showModal();
+                                    }}
+                                >
+                                    {d.userName}
+                                </td>
+                                {this.state.leaderboards.map((l, index) => {
+                                    const current = idx[index][d._id];
+                                    const prev = idx[index + 1] ? idx[index + 1][d._id] : null;
+                                    return (
+                                        <>
+                                            <td
+                                                title={
+                                                    current
+                                                        ? `Rank: ${nf(current.rank)}, Swiss Money: ${nf(
+                                                              current.allPrestigeCurrency
+                                                          )}`
+                                                        : "N/A"
+                                                }
+                                                class={
+                                                    current &&
+                                                    prev &&
+                                                    Math.abs(current.valuation - prev.valuation) / prev.valuation > 0.1
+                                                        ? "text-right red"
+                                                        : "text-right"
+                                                }
+                                            >
+                                                {current ? nf(current.valuation) : ""}
+                                            </td>
+                                        </>
+                                    );
+                                })}
+                            </tr>
                         );
                     })}
-                </tr>
-                {this.state.leaderboards[0].data.map((d) => {
-                    return (
-                        <tr>
-                            <td
-                                className={d.dlc ? "pointer" : "pointer bold"}
-                                onClick={() =>
-                                    navigator.clipboard.writeText(d._id ?? "")
-                                }
-                            >
-                                {d.userName}
-                            </td>
-                            {this.state.leaderboards.map((l, index) => {
-                                const current = idx[index][d._id];
-                                const prev = idx[index + 1]
-                                    ? idx[index + 1][d._id]
-                                    : null;
-                                return (
-                                    <>
-                                        <td
-                                            title={
-                                                current
-                                                    ? `Rank: ${nf(
-                                                          current.rank
-                                                      )}, Swiss Money: ${nf(
-                                                          current.allPrestigeCurrency
-                                                      )}`
-                                                    : "N/A"
-                                            }
-                                            class={
-                                                current &&
-                                                prev &&
-                                                Math.abs(
-                                                    current.valuation -
-                                                        prev.valuation
-                                                ) /
-                                                    prev.valuation >
-                                                    0.1
-                                                    ? "text-right red"
-                                                    : "text-right"
-                                            }
-                                        >
-                                            {current
-                                                ? nf(current.valuation)
-                                                : ""}
-                                        </td>
-                                    </>
-                                );
-                            })}
-                        </tr>
-                    );
-                })}
-            </table>
+                </table>
+            </>
         );
     }
 }

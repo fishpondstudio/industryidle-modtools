@@ -1,4 +1,5 @@
 import { Component } from "preact";
+import { API_HOST } from "./Constants";
 import { getUrlParams, nf } from "./Helper";
 
 interface ILeaderboard {
@@ -110,17 +111,17 @@ export class LeaderboardPage extends Component<
                 <button
                     onClick={async () => {
                         this.state.userData.optOut = true;
-                        const r = await fetch(
-                            `https://couchdb-de.fishpondstudio.com/industryidle_ticks/${this.state.userData._id}`,
-                            {
-                                headers: {
-                                    Authorization: `Basic ${btoa(getUrlParams()?.couchdb)}`,
-                                    "Content-Type": "application/json",
-                                },
-                                body: JSON.stringify(this.state.userData),
-                                method: "put",
-                            }
-                        );
+                        const userId = this.state.userData._id;
+                        const r = await fetch(`https://couchdb-de.fishpondstudio.com/industryidle_ticks/${userId}`, {
+                            headers: {
+                                Authorization: `Basic ${btoa(getUrlParams()?.couchdb)}`,
+                                "Content-Type": "application/json",
+                            },
+                            body: JSON.stringify(this.state.userData),
+                            method: "put",
+                        });
+                        fetch(`${API_HOST}/opt-out?token=${getUrlParams()?.token}}&userId=${userId}`);
+                        // @ts-expect-error
                         this.dialog?.close();
                         alert(`${r.status} ${r.statusText}`);
                     }}

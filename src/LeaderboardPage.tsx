@@ -36,7 +36,7 @@ export class LeaderboardPage extends Component<
         userData: any;
     }
 > {
-    private dialog: HTMLDialogElement | null;
+    private dialog: HTMLDialogElement | null = null;
 
     constructor() {
         super();
@@ -120,15 +120,22 @@ export class LeaderboardPage extends Component<
                             body: JSON.stringify(this.state.userData),
                             method: "put",
                         });
-                        fetch(`${API_HOST}/opt-out?token=${getUrlParams()?.token}}&userId=${userId}`);
-                        // @ts-expect-error
+                        fetch(`${API_HOST}/opt-out?token=${getUrlParams()?.token}&userId=${userId}`);
+                        // @ts-ignore
                         this.dialog?.close();
                         alert(`${r.status} ${r.statusText}`);
                     }}
                 >
                     Opt Out
                 </button>{" "}
-                <button onClick={() => this.dialog.close()}>Close</button>
+                <button
+                    onClick={() => {
+                        // @ts-ignore
+                        this.dialog?.close();
+                    }}
+                >
+                    Close
+                </button>
             </>
         );
 
@@ -175,7 +182,7 @@ export class LeaderboardPage extends Component<
                                         );
                                         const j = await r.json();
                                         this.setState({ userData: j });
-                                        // @ts-expect-error
+                                        // @ts-ignore
                                         this.dialog?.showModal();
                                     }}
                                 >

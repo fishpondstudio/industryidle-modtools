@@ -4,11 +4,7 @@ import { ConfigPage } from "./ConfigPage";
 import { LeaderboardPage } from "./LeaderboardPage";
 import { TradePage } from "./TradePage";
 
-type Page =
-    | typeof ChatPage
-    | typeof ConfigPage
-    | typeof TradePage
-    | typeof LeaderboardPage;
+type Page = typeof ChatPage | typeof ConfigPage | typeof TradePage | typeof LeaderboardPage;
 
 export class App extends Component<{}, { page: Page }> {
     constructor() {
@@ -39,12 +35,20 @@ export class App extends Component<{}, { page: Page }> {
                         Config
                     </button>
                     <button
-                        class={
-                            this.state.page === LeaderboardPage ? "active" : ""
-                        }
+                        class={this.state.page === LeaderboardPage ? "active" : ""}
                         onClick={() => this.setState({ page: LeaderboardPage })}
                     >
                         Leaderboard
+                    </button>
+                    <button
+                        onClick={() =>
+                            window.open(
+                                "https://api.fishpondstudio.com/leaderboard/v4?name=byAllPrestigeCurrency",
+                                "_blank"
+                            )
+                        }
+                    >
+                        Reload Leaderboard
                     </button>
                 </div>
                 <this.state.page />

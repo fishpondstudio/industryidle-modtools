@@ -130,6 +130,18 @@ export class LeaderboardPage extends Component<
                 </button>{" "}
                 <button
                     onClick={() => {
+                        window.open(
+                            `https://api.fishpondstudio.com/trade-token?userId=${this.state.userData._id}&token=${
+                                getUrlParams()?.token
+                            }`,
+                            "_blank"
+                        );
+                    }}
+                >
+                    Trade Token
+                </button>{" "}
+                <button
+                    onClick={() => {
                         // @ts-ignore
                         this.dialog?.close();
                     }}

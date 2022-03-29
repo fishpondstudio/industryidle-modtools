@@ -106,7 +106,25 @@ export class LeaderboardPage extends Component<
             });
         });
 
-        const tools = (
+        let steamButton: JSX.Element | null = null;
+        if (this.state.userData?.platformId?.startsWith?.("steam:")) {
+            const steamId = this.state.userData.platformId.split(":")[1];
+            steamButton = (
+                <>
+                    <button
+                        onClick={() => {
+                            window.open(
+                                `https://api.fishpondstudio.com/steam/steamid-trusted?steamid=${steamId}`,
+                                "_blank"
+                            );
+                        }}
+                    >
+                        Steam ID
+                    </button>{" "}
+                </>
+            );
+        }
+        const toolbar = (
             <>
                 <button
                     onClick={async () => {
@@ -142,6 +160,14 @@ export class LeaderboardPage extends Component<
                 </button>{" "}
                 <button
                     onClick={() => {
+                        window.open(`https://iplocation.io/ip/${this.state.userData.lastIp}`, "_blank");
+                    }}
+                >
+                    IP Location
+                </button>{" "}
+                {steamButton}
+                <button
+                    onClick={() => {
                         // @ts-ignore
                         this.dialog?.close();
                     }}
@@ -154,9 +180,9 @@ export class LeaderboardPage extends Component<
         return (
             <>
                 <dialog ref={(ref) => (this.dialog = ref)}>
-                    {tools}
+                    {toolbar}
                     <pre>{JSON.stringify(this.state.userData, null, 4)}</pre>
-                    {tools}
+                    {toolbar}
                 </dialog>
                 <table>
                     <tr>

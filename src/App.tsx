@@ -1,55 +1,53 @@
 import { Component } from "preact";
+import { AntiCheatPage } from "./AntiCheatPage";
 import { ChatPage } from "./ChatPage";
 import { ConfigPage } from "./ConfigPage";
 import { LeaderboardPage } from "./LeaderboardPage";
 import { TradePage } from "./TradePage";
 
-type Page = typeof ChatPage | typeof ConfigPage | typeof TradePage | typeof LeaderboardPage;
+type Page = typeof ChatPage | typeof ConfigPage | typeof TradePage | typeof LeaderboardPage | typeof AntiCheatPage;
+
+export const Routes: Record<string, Page> = {
+    "#chat": ChatPage,
+    "#config": ConfigPage,
+    "#trade": TradePage,
+    "#leaderboard": LeaderboardPage,
+    "#anticheat": AntiCheatPage,
+} as const;
+
+export function getRoutePage() {
+    return Routes[window.location.hash] ?? ChatPage;
+}
 
 export class App extends Component<{}, { page: Page }> {
     constructor() {
         super();
-        this.state = { page: ChatPage };
+        window.onhashchange = () => {
+            this.setState({ page: getRoutePage() });
+        };
+        this.state = { page: getRoutePage() };
     }
 
     render() {
         return (
             <>
                 <div class="navigation">
-                    <button
-                        class={this.state.page === ChatPage ? "active" : ""}
-                        onClick={() => this.setState({ page: ChatPage })}
-                    >
+                    <a class={this.state.page === ChatPage ? "active" : ""} href="#chat">
                         Chat
-                    </button>
-                    <button
-                        class={this.state.page === TradePage ? "active" : ""}
-                        onClick={() => this.setState({ page: TradePage })}
-                    >
+                    </a>
+
+                    <a class={this.state.page === TradePage ? "active" : ""} href="#trade">
                         Trade
-                    </button>
-                    <button
-                        class={this.state.page === ConfigPage ? "active" : ""}
-                        onClick={() => this.setState({ page: ConfigPage })}
-                    >
+                    </a>
+                    <a class={this.state.page === ConfigPage ? "active" : ""} href="#config">
                         Config
-                    </button>
-                    <button
-                        class={this.state.page === LeaderboardPage ? "active" : ""}
-                        onClick={() => this.setState({ page: LeaderboardPage })}
-                    >
+                    </a>
+                    <a class={this.state.page === LeaderboardPage ? "active" : ""} href="#leaderboard">
                         Leaderboard
-                    </button>
-                    <button
-                        onClick={() =>
-                            window.open(
-                                "https://api.fishpondstudio.com/leaderboard/v4?name=byAllPrestigeCurrency",
-                                "_blank"
-                            )
-                        }
-                    >
-                        Reload Leaderboard
-                    </button>
+                    </a>
+                    <a class={this.state.page === AntiCheatPage ? "active" : ""} href="#anticheat">
+                        Anti-Cheat
+                    </a>
                 </div>
                 <this.state.page />
             </>

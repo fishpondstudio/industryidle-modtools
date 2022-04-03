@@ -24,6 +24,13 @@ interface IUserItem {
     allPrestigeCurrency: number;
 }
 
+declare global {
+    interface HTMLDialogElement {
+        showModal(): void;
+        close(): void;
+    }
+}
+
 export class LeaderboardPage extends Component<
     {},
     {
@@ -139,7 +146,6 @@ export class LeaderboardPage extends Component<
                             method: "put",
                         });
                         fetch(`${API_HOST}/opt-out?token=${getUrlParams()?.token}&userId=${userId}`);
-                        // @ts-ignore
                         this.dialog?.close();
                         alert(`${r.status} ${r.statusText}`);
                     }}
@@ -168,7 +174,6 @@ export class LeaderboardPage extends Component<
                 {steamButton}
                 <button
                     onClick={() => {
-                        // @ts-ignore
                         this.dialog?.close();
                     }}
                 >
@@ -186,7 +191,14 @@ export class LeaderboardPage extends Component<
                 </dialog>
                 <table>
                     <tr>
-                        <th></th>
+                        <th>
+                            <a
+                                href="https://api.fishpondstudio.com/leaderboard/v4?name=byAllPrestigeCurrency"
+                                target="_blank"
+                            >
+                                Reload
+                            </a>
+                        </th>
                         {this.state.leaderboards.map((d) => {
                             return (
                                 <th
@@ -220,7 +232,6 @@ export class LeaderboardPage extends Component<
                                         );
                                         const j = await r.json();
                                         this.setState({ userData: j });
-                                        // @ts-ignore
                                         this.dialog?.showModal();
                                     }}
                                 >

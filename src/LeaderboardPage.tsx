@@ -1,6 +1,7 @@
 import { Component } from "preact";
-import { API_HOST } from "./Constants";
 import { getUrlParams, nf } from "./Helper";
+import { TradeDialog } from "./TradeDialog";
+import { UserInfoDialog } from "./UserInfoDialog";
 
 interface ILeaderboard {
     _id: string;
@@ -41,10 +42,10 @@ export class LeaderboardPage extends Component<
             data: ILeaderboard[];
         }[];
         userData: any;
+        userId: string | null;
+        tradeIp: string | null;
     }
 > {
-    private dialog: HTMLDialogElement | null = null;
-
     constructor() {
         super();
         this.loadData();
@@ -113,85 +114,13 @@ export class LeaderboardPage extends Component<
             });
         });
 
-        let steamButton: JSX.Element | null = null;
-        if (this.state.userData?.platformId?.startsWith?.("steam:")) {
-            const steamId = this.state.userData.platformId.split(":")[1];
-            steamButton = (
-                <>
-                    <button
-                        onClick={() => {
-                            window.open(
-                                `https://api.fishpondstudio.com/steam/steamid-trusted?steamid=${steamId}`,
-                                "_blank"
-                            );
-                        }}
-                    >
-                        Steam ID
-                    </button>{" "}
-                </>
-            );
-        }
-        const toolbar = (
-            <>
-                <button
-                    onClick={async () => {
-                        this.state.userData.optOut = true;
-                        const userId = this.state.userData._id;
-                        const r = await fetch(`https://couchdb-de.fishpondstudio.com/industryidle_ticks/${userId}`, {
-                            headers: {
-                                Authorization: `Basic ${btoa(getUrlParams()?.couchdb)}`,
-                                "Content-Type": "application/json",
-                            },
-                            body: JSON.stringify(this.state.userData),
-                            method: "put",
-                        });
-                        fetch(`${API_HOST}/opt-out?token=${getUrlParams()?.token}&userId=${userId}`);
-                        this.dialog?.close();
-                        alert(`${r.status} ${r.statusText}`);
-                    }}
-                >
-                    Opt Out
-                </button>{" "}
-                <button
-                    onClick={() => {
-                        window.open(
-                            `https://api.fishpondstudio.com/trade-token?userId=${this.state.userData._id}&token=${
-                                getUrlParams()?.token
-                            }`,
-                            "_blank"
-                        );
-                    }}
-                >
-                    Trade Token
-                </button>{" "}
-                <button
-                    onClick={() => {
-                        window.open(`https://iplocation.io/ip/${this.state.userData.lastIp}`, "_blank");
-                    }}
-                >
-                    IP Location
-                </button>{" "}
-                {steamButton}
-                <button
-                    onClick={() => {
-                        this.dialog?.close();
-                    }}
-                >
-                    Close
-                </button>
-            </>
-        );
-
         return (
             <>
-                <dialog ref={(ref) => (this.dialog = ref)}>
-                    {toolbar}
-                    <pre>{JSON.stringify(this.state.userData, null, 4)}</pre>
-                    {toolbar}
-                </dialog>
+                <UserInfoDialog userId={this.state.userId}></UserInfoDialog>
+                <TradeDialog ip={this.state.tradeIp} />
                 <table>
                     <tr>
-                        <th>
+                        <th colSpan={2}>
                             <a
                                 href="https://api.fishpondstudio.com/leaderboard/v4?name=byAllPrestigeCurrency"
                                 target="_blank"
@@ -217,26 +146,38 @@ export class LeaderboardPage extends Component<
                     {this.state.leaderboards[0].data.map((d) => {
                         return (
                             <tr>
-                                <td
-                                    className={d.dlc ? "pointer" : "pointer bold"}
-                                    onClick={async () => {
-                                        const r = await fetch(
-                                            `https://couchdb-de.fishpondstudio.com/industryidle_ticks/${d._id}`,
-                                            {
-                                                headers: {
-                                                    Authorization: `Basic ${btoa(getUrlParams()?.couchdb)}`,
-                                                    "Content-Type": "application/json",
-                                                },
-                                                method: "get",
+                                <td>
+                                    <button
+                                        onClick={() => {
+                                            this.setState({ userId: d._id, tradeIp: null });
+                                        }}
+                                    >
+                                        User
+                                    </button>{" "}
+                                    <button
+                                        onClick={async () => {
+                                            const r = await fetch(
+                                                `https://couchdb-de.fishpondstudio.com/industryidle_ticks/${d._id}`,
+                                                {
+                                                    headers: {
+                                                        Authorization: `Basic ${btoa(getUrlParams()?.couchdb)}`,
+                                                        "Content-Type": "application/json",
+                                                    },
+                                                    method: "get",
+                                                }
+                                            );
+                                            const j = await r.json();
+                                            if (j.lastIp) {
+                                                this.setState({ userId: null, tradeIp: j.lastIp });
+                                            } else {
+                                                alert("No IP found for this user");
                                             }
-                                        );
-                                        const j = await r.json();
-                                        this.setState({ userData: j });
-                                        this.dialog?.showModal();
-                                    }}
-                                >
-                                    {d.userName}
+                                        }}
+                                    >
+                                        Trade
+                                    </button>
                                 </td>
+                                <td class={d.dlc ? "" : "red"}>{d.userName}</td>
                                 {this.state.leaderboards.map((l, index) => {
                                     const current = idx[index][d._id];
                                     const prev = idx[index + 1] ? idx[index + 1][d._id] : null;

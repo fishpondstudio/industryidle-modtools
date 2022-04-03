@@ -1,10 +1,13 @@
 import { Component } from "preact";
-import { API_HOST } from "./Constants";
 import { getUrlParams, nf } from "./Helper";
+import { ResourceDialog } from "./ResourceDialog";
+import { TradeDialog } from "./TradeDialog";
+import { UserInfoDialog } from "./UserInfoDialog";
 
-export class AntiCheatPage extends Component<{}, { entires: any; entry: any }> {
-    private dialog: HTMLDialogElement | null = null;
-
+export class AntiCheatPage extends Component<
+    {},
+    { entires: any[]; selectedIndex: number; userInfoId: string | null; tradeIp: string | null }
+> {
     constructor() {
         super();
         this.loadData();
@@ -39,71 +42,14 @@ export class AntiCheatPage extends Component<{}, { entires: any; entry: any }> {
         if (!this.state.entires) {
             return;
         }
-        let dialogContent = null;
-        if (this.state.entry) {
-            const toolbar = (
-                <div>
-                    <button
-                        onClick={async () => {
-                            const r = await fetch(
-                                `${API_HOST}/opt-out?token=${getUrlParams()?.token}&userId=${this.state.entry.userId}`
-                            );
-                            this.dialog?.close();
-                            alert(`${r.status} ${r.statusText}`);
-                        }}
-                        disabled={this.state.entry.after.optOut}
-                    >
-                        Opt Out
-                    </button>{" "}
-                    <button
-                        onClick={async () => {
-                            navigator.clipboard.writeText(this.state.entry.platformId);
-                        }}
-                    >
-                        {this.state.entry.platformId.toUpperCase()}
-                    </button>{" "}
-                    <button onClick={() => this.dialog?.close()}>Close</button>
-                </div>
-            );
-            dialogContent = (
-                <>
-                    {toolbar}
-                    <table class="mb10 mt10">
-                        <tr>
-                            <th>Resource</th>
-                            <th>Amount (Before)</th>
-                            <th>Amount (After)</th>
-                            <th>Amount (%)</th>
-                        </tr>
-                        {Object.keys(this.state.entry.after.res).map((k) => {
-                            const delta =
-                                (100 * (this.state.entry.after.res[k] - this.state.entry.before.res[k])) /
-                                this.state.entry.before.res[k];
-                            return (
-                                <tr>
-                                    <td>{k}</td>
-                                    <td>
-                                        {nf(this.state.entry.before.res[k] ?? 0)}
-                                        <br />
-                                        <code>{this.state.entry.before.res[k]}</code>
-                                    </td>
-                                    <td>
-                                        {nf(this.state.entry.after.res[k])}
-                                        <br />
-                                        <code>{this.state.entry.after.res[k]}</code>
-                                    </td>
-                                    <td class={Math.abs(delta) > 10 ? "red" : ""}>{Math.round(delta)}%</td>
-                                </tr>
-                            );
-                        })}
-                    </table>
-                    {toolbar}
-                </>
-            );
-        }
         return (
             <>
-                <dialog ref={(ref) => (this.dialog = ref)}>{dialogContent}</dialog>
+                <ResourceDialog
+                    entry={this.state.entires[this.state.selectedIndex]}
+                    onClose={() => this.setState({ selectedIndex: -1 })}
+                />
+                <UserInfoDialog userId={this.state.userInfoId}></UserInfoDialog>
+                <TradeDialog ip={this.state.tradeIp} />
                 <table>
                     <tr>
                         <th>Name</th>
@@ -111,9 +57,9 @@ export class AntiCheatPage extends Component<{}, { entires: any; entry: any }> {
                         <th colSpan={3}>Swiss</th>
                         <th colSpan={3}>All Time Swiss</th>
                         <th>Created At</th>
+                        <th></th>
                     </tr>
-                    {Object.keys(this.state.entires).map((k) => {
-                        const entry = this.state.entires[k];
+                    {this.state.entires.map((entry: any, index) => {
                         const valuationBefore = entry.before.resourceValuation + entry.before.buildingValuation;
                         const valuationAfter = entry.after.resourceValuation + entry.after.buildingValuation;
                         const swissBefore = entry.before.prestigeCurrency;
@@ -123,15 +69,7 @@ export class AntiCheatPage extends Component<{}, { entires: any; entry: any }> {
                         const valuationDelta = (100 * (valuationAfter - valuationBefore)) / valuationBefore;
                         return (
                             <tr>
-                                <td
-                                    onClick={() => {
-                                        this.setState({ entry });
-                                        this.dialog?.showModal();
-                                    }}
-                                    class="pointer"
-                                >
-                                    {entry.before.userName}
-                                </td>
+                                <td>{entry.before.userName}</td>
                                 <td>{nf(valuationBefore)}</td>
                                 <td>{nf(valuationAfter)}</td>
                                 <td class={valuationDelta >= 100 ? "red" : ""}>{Math.round(valuationDelta)}%</td>
@@ -144,6 +82,33 @@ export class AntiCheatPage extends Component<{}, { entires: any; entry: any }> {
                                     {Math.round((100 * (allTimeSwissAfter - allTimeSwissBefore)) / allTimeSwissBefore)}%
                                 </td>
                                 <td>{new Date(entry.createdAt).toLocaleString()}</td>
+                                <td>
+                                    <button
+                                        onClick={() => {
+                                            this.setState({ selectedIndex: index, userInfoId: null, tradeIp: null });
+                                        }}
+                                    >
+                                        Diff
+                                    </button>{" "}
+                                    <button
+                                        onClick={() => {
+                                            this.setState({
+                                                selectedIndex: -1,
+                                                userInfoId: entry.userId,
+                                                tradeIp: null,
+                                            });
+                                        }}
+                                    >
+                                        User
+                                    </button>{" "}
+                                    <button
+                                        onClick={() => {
+                                            this.setState({ selectedIndex: -1, userInfoId: null, tradeIp: entry.ip });
+                                        }}
+                                    >
+                                        Trades
+                                    </button>
+                                </td>
                             </tr>
                         );
                     })}

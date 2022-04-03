@@ -2,10 +2,7 @@ import { Component } from "preact";
 import { API_HOST } from "./Constants";
 import { getUrlParams } from "./Helper";
 
-export class ConfigPage extends Component<
-    {},
-    { config: string; saving: boolean }
-> {
+export class ConfigPage extends Component<{}, { config: string; saving: boolean }> {
     private codeMirror?: CodeMirror.Editor;
 
     constructor() {
@@ -22,7 +19,7 @@ export class ConfigPage extends Component<
                 this.setState({ config: j });
             });
     }
-    componentDidUpdate() {
+    override componentDidUpdate() {
         if (this.codeMirror) {
             return;
         }
@@ -57,16 +54,11 @@ export class ConfigPage extends Component<
                         }
                         this.setState({ saving: true });
                         try {
-                            await fetch(
-                                `${API_HOST}/config?token=${
-                                    getUrlParams()?.token
-                                }`,
-                                {
-                                    method: "post",
-                                    body: this.codeMirror.getValue(),
-                                    headers: { "Content-Type": "text/plain" },
-                                }
-                            );
+                            await fetch(`${API_HOST}/config?token=${getUrlParams()?.token}`, {
+                                method: "post",
+                                body: this.codeMirror.getValue(),
+                                headers: { "Content-Type": "text/plain" },
+                            });
                             if (confirm("Config saved, open live config?")) {
                                 openLiveConfig();
                             }
@@ -92,8 +84,5 @@ export class ConfigPage extends Component<
 }
 
 function openLiveConfig() {
-    window.open(
-        `${API_HOST}/config-live?token=${getUrlParams()?.token}`,
-        "_blank"
-    );
+    window.open(`${API_HOST}/config-live?token=${getUrlParams()?.token}`, "_blank");
 }

@@ -60,6 +60,7 @@ export class UserInfoDialog extends Component<UserInfoDialogProps, { userInfo: a
                         fetch(`${API_HOST}/opt-out?token=${getUrlParams()?.token}&userId=${userId}`);
                         alert(`${r.status} ${r.statusText}`);
                     }}
+                    disabled={this.state.userInfo.optOut}
                 >
                     Opt Out
                 </button>{" "}

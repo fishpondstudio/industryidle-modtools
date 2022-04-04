@@ -64,6 +64,7 @@ export class TradeDialog extends Component<TradeDialogProps, { trades: any[] | n
                 {toolbar}
                 <table class="mb10 mt10">
                     <tr>
+                        <th>Side</th>
                         <th>Resource</th>
                         <th>Price</th>
                         <th>Amount</th>
@@ -76,6 +77,9 @@ export class TradeDialog extends Component<TradeDialogProps, { trades: any[] | n
                     {this.state.trades.map((trade) => {
                         return (
                             <tr>
+                                <td class={trade.side === "buy" ? "green bold" : "red bold"}>
+                                    {trade.side.toUpperCase()}
+                                </td>
                                 <td>{trade.resource}</td>
                                 <td>{nf(trade.price)}</td>
                                 <td>{nf(trade.amount)}</td>

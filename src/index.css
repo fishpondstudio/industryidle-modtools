@@ -61,6 +61,10 @@ th {
     color: red;
 }
 
+.green {
+    color: green;
+}
+
 .navigation {
     text-align: center;
     margin: 0 0 8px 0;
@@ -100,5 +104,10 @@ dialog {
 }
 
 code {
+    font-size: 12px;
+}
+
+#editor,
+pre {
     font-size: 12px;
 }

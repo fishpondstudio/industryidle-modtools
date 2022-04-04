@@ -6,7 +6,7 @@ import { UserInfoDialog } from "./UserInfoDialog";
 
 export class AntiCheatPage extends Component<
     {},
-    { entires: any[]; selectedIndex: number; userInfoId: string | null; tradeIp: string | null }
+    { entries: any[]; resourceInfo: any | null; userInfoId: string | null; tradeIp: string | null }
 > {
     constructor() {
         super();
@@ -27,27 +27,30 @@ export class AntiCheatPage extends Component<
             }),
         });
         const j = await r.json();
-        this.setState({
-            entires: j.docs.sort((a: any, b: any) => {
-                const userId = a.userId.localeCompare(b.userId);
-                if (userId !== 0) {
-                    return userId;
+        const results: any = {};
+        j.docs.forEach((doc: any) => {
+            if (results[doc.userId]) {
+                results[doc.userId].entries.push(doc);
+                if (doc.createdAt > results[doc.userId].createdAt) {
+                    results[doc.userId] = doc.createdAt;
                 }
-                return b.createdAt - a.createdAt;
-            }),
+            } else {
+                results[doc.userId] = { entries: [doc], createdAt: doc.createdAt };
+            }
         });
+        const entries = (Object.values(results) as any).sort((a: any, b: any) => {
+            b.createdAt - a.createdAt;
+        });
+        this.setState({ entries });
     }
 
     render() {
-        if (!this.state.entires) {
+        if (!this.state.entries) {
             return;
         }
         return (
             <>
-                <ResourceDialog
-                    entry={this.state.entires[this.state.selectedIndex]}
-                    onClose={() => this.setState({ selectedIndex: -1 })}
-                />
+                <ResourceDialog entry={this.state.resourceInfo} onClose={() => this.setState({ resourceInfo: null })} />
                 <UserInfoDialog userId={this.state.userInfoId}></UserInfoDialog>
                 <TradeDialog ip={this.state.tradeIp} />
                 <table>
@@ -59,58 +62,71 @@ export class AntiCheatPage extends Component<
                         <th>Created At</th>
                         <th></th>
                     </tr>
-                    {this.state.entires.map((entry: any, index) => {
-                        const valuationBefore = entry.before.resourceValuation + entry.before.buildingValuation;
-                        const valuationAfter = entry.after.resourceValuation + entry.after.buildingValuation;
-                        const swissBefore = entry.before.prestigeCurrency;
-                        const swissAfter = entry.after.prestigeCurrency;
-                        const allTimeSwissBefore = entry.before.allPrestigeCurrency;
-                        const allTimeSwissAfter = entry.after.allPrestigeCurrency;
-                        const valuationDelta = (100 * (valuationAfter - valuationBefore)) / valuationBefore;
-                        return (
-                            <tr>
-                                <td>{entry.before.userName}</td>
-                                <td>{nf(valuationBefore)}</td>
-                                <td>{nf(valuationAfter)}</td>
-                                <td class={valuationDelta >= 100 ? "red" : ""}>{Math.round(valuationDelta)}%</td>
-                                <td>{nf(swissBefore)}</td>
-                                <td>{nf(swissAfter)}</td>
-                                <td>{Math.round((100 * (swissAfter - swissBefore)) / swissBefore)}%</td>
-                                <td>{nf(allTimeSwissBefore)}</td>
-                                <td>{nf(allTimeSwissAfter)}</td>
-                                <td>
-                                    {Math.round((100 * (allTimeSwissAfter - allTimeSwissBefore)) / allTimeSwissBefore)}%
-                                </td>
-                                <td>{new Date(entry.createdAt).toLocaleString()}</td>
-                                <td>
-                                    <button
-                                        onClick={() => {
-                                            this.setState({ selectedIndex: index, userInfoId: null, tradeIp: null });
-                                        }}
-                                    >
-                                        Diff
-                                    </button>{" "}
-                                    <button
-                                        onClick={() => {
-                                            this.setState({
-                                                selectedIndex: -1,
-                                                userInfoId: entry.userId,
-                                                tradeIp: null,
-                                            });
-                                        }}
-                                    >
-                                        User
-                                    </button>{" "}
-                                    <button
-                                        onClick={() => {
-                                            this.setState({ selectedIndex: -1, userInfoId: null, tradeIp: entry.ip });
-                                        }}
-                                    >
-                                        Trades
-                                    </button>
-                                </td>
-                            </tr>
-                        );
+                    {this.state.entries.map((row: any) => {
+                        return row.entries.map((entry: any, index: number) => {
+                            const valuationBefore = entry.before.resourceValuation + entry.before.buildingValuation;
+                            const valuationAfter = entry.after.resourceValuation + entry.after.buildingValuation;
+                            const swissBefore = entry.before.prestigeCurrency;
+                            const swissAfter = entry.after.prestigeCurrency;
+                            const allTimeSwissBefore = entry.before.allPrestigeCurrency;
+                            const allTimeSwissAfter = entry.after.allPrestigeCurrency;
+                            const valuationDelta = (100 * (valuationAfter - valuationBefore)) / valuationBefore;
+                            return (
+                                <tr>
+                                    <td>{index === 0 ? entry.before.userName : ""}</td>
+                                    <td>{nf(valuationBefore)}</td>
+                                    <td>{nf(valuationAfter)}</td>
+                                    <td class={valuationDelta >= 100 ? "red" : ""}>{Math.round(valuationDelta)}%</td>
+                                    <td>{nf(swissBefore)}</td>
+                                    <td>{nf(swissAfter)}</td>
+                                    <td>{Math.round((100 * (swissAfter - swissBefore)) / swissBefore)}%</td>
+                                    <td>{nf(allTimeSwissBefore)}</td>
+                                    <td>{nf(allTimeSwissAfter)}</td>
+                                    <td>
+                                        {Math.round(
+                                            (100 * (allTimeSwissAfter - allTimeSwissBefore)) / allTimeSwissBefore
+                                        )}
+                                        %
+                                    </td>
+                                    <td>{new Date(entry.createdAt).toLocaleString()}</td>
+                                    <td>
+                                        <button
+                                            onClick={() => {
+                                                this.setState({
+                                                    resourceInfo: entry,
+                                                    userInfoId: null,
+                                                    tradeIp: null,
+                                                });
+                                            }}
+                                        >
+                                            Diff
+                                        </button>{" "}
+                                        <button
+                                            onClick={() => {
+                                                this.setState({
+                                                    resourceInfo: null,
+                                                    userInfoId: entry.userId,
+                                                    tradeIp: null,
+                                                });
+                                            }}
+                                        >
+                                            User
+                                        </button>{" "}
+                                        <button
+                                            onClick={() => {
+                                                this.setState({
+                                                    resourceInfo: null,
+                                                    userInfoId: null,
+                                                    tradeIp: entry.ip,
+                                                });
+                                            }}
+                                        >
+                                            Trades
+                                        </button>
+                                    </td>
+                                </tr>
+                            );
+                        });
                     })}
                 </table>
             </>

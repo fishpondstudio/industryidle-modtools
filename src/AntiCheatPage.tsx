@@ -6,7 +6,13 @@ import { UserInfoDialog } from "./UserInfoDialog";
 
 export class AntiCheatPage extends Component<
     {},
-    { entries: any[]; resourceInfo: any | null; userInfoId: string | null; tradeIp: string | null }
+    {
+        entries: any[];
+        resources: any | null;
+        highlightTime: number;
+        userInfoId: string | null;
+        tradeIp: string | null;
+    }
 > {
     constructor() {
         super();
@@ -50,7 +56,11 @@ export class AntiCheatPage extends Component<
         }
         return (
             <>
-                <ResourceDialog entry={this.state.resourceInfo} onClose={() => this.setState({ resourceInfo: null })} />
+                <ResourceDialog
+                    entries={this.state.resources}
+                    highlightTime={this.state.highlightTime}
+                    onClose={() => this.setState({ resources: null })}
+                />
                 <UserInfoDialog userId={this.state.userInfoId}></UserInfoDialog>
                 <TradeDialog ip={this.state.tradeIp} />
                 <table>
@@ -93,7 +103,8 @@ export class AntiCheatPage extends Component<
                                         <button
                                             onClick={() => {
                                                 this.setState({
-                                                    resourceInfo: entry,
+                                                    resources: row.entries,
+                                                    highlightTime: entry.createdAt,
                                                     userInfoId: null,
                                                     tradeIp: null,
                                                 });
@@ -104,7 +115,8 @@ export class AntiCheatPage extends Component<
                                         <button
                                             onClick={() => {
                                                 this.setState({
-                                                    resourceInfo: null,
+                                                    resources: null,
+                                                    highlightTime: 0,
                                                     userInfoId: entry.userId,
                                                     tradeIp: null,
                                                 });
@@ -115,7 +127,8 @@ export class AntiCheatPage extends Component<
                                         <button
                                             onClick={() => {
                                                 this.setState({
-                                                    resourceInfo: null,
+                                                    resources: null,
+                                                    highlightTime: 0,
                                                     userInfoId: null,
                                                     tradeIp: entry.ip,
                                                 });

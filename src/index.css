@@ -39,6 +39,10 @@ th {
     background: #f4f4f4;
 }
 
+th.highlighted {
+    color: DodgerBlue;
+}
+
 tr:hover {
     background: #ffeaa7;
 }
@@ -46,7 +50,7 @@ tr:hover {
 td,
 th {
     padding: 2px 5px;
-    border: 1px solid #eee;
+    border: 1px solid #ddd;
 }
 
 .pointer {

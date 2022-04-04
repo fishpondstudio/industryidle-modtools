@@ -29,18 +29,10 @@ export function nf(num: number): string {
     return num.toLocaleString() + "E" + idx;
 }
 
-export function banIp(
-    type: "banChat" | "banTrade",
-    time: number,
-    ip: Record<string, number>
-): Promise<Response[]> {
+export function banIp(type: "banChat" | "banTrade", time: number, ip: Record<string, number>): Promise<Response[]> {
     return Promise.all(
         Object.keys(ip).map((ip) =>
-            fetch(
-                `${API_HOST}/stat?token=${
-                    getUrlParams()?.token
-                }&ip=${ip}&${type}=${time}&update`
-            )
+            fetch(`${API_HOST}/stat?token=${getUrlParams()?.token}&ip=${ip}&${type}=${time}&update`)
         )
     );
 }

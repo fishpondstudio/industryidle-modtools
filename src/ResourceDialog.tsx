@@ -45,14 +45,13 @@ export class ResourceDialog extends Component<{ entries: any; onClose: () => voi
                             <tr>
                                 <td>{resource}</td>
                                 {sorted.map((entry: any, index: number) => {
-                                    const diff = Math.round(
-                                        (100 * (entry.after.res[resource] - entry.before.res[resource])) /
-                                            entry.before.res[resource]
-                                    );
+                                    const before = entry.before.res[resource] ?? 0;
+                                    const after = entry.after.res[resource] ?? 0;
+                                    const diff = before === 0 ? 0 : Math.round((100 * (after - before)) / before);
                                     return (
                                         <>
-                                            <td title={entry.before.res[resource]}>{nf(entry.before.res[resource])}</td>
-                                            <td title={entry.after.res[resource]}>{nf(entry.after.res[resource])}</td>
+                                            <td title={before}>{nf(before)}</td>
+                                            <td title={after}>{nf(after)}</td>
                                             <td class={Math.abs(diff) > 10 ? "red" : ""}>{diff}%</td>
                                         </>
                                     );

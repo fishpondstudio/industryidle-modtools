@@ -86,6 +86,16 @@ export class UserInfoDialog extends Component<UserInfoDialogProps, { userInfo: a
                 {steamButton}
                 <button
                     onClick={() => {
+                        window.open(
+                            `https://couchdb-de.fishpondstudio.com/_utils/#database/industryidle_ticks/${this.props.userId}`,
+                            "_blank"
+                        );
+                    }}
+                >
+                    CouchDB
+                </button>{" "}
+                <button
+                    onClick={() => {
                         this.props.userId = null;
                         this.setState({ userInfo: null });
                     }}

@@ -1,8 +1,8 @@
-import { Component } from "preact";
 import { API_HOST } from "./Constants";
 import { banIp, getUrlParams, nf } from "./Helper";
+import { Page } from "./Page";
 
-export class TradePage extends Component<{}, { trades: any; ban: any }> {
+export class TradePage extends Page<{ trades: any; ban: any }> {
     constructor() {
         super();
         this.loadData();
@@ -26,11 +26,7 @@ export class TradePage extends Component<{}, { trades: any; ban: any }> {
 
     async deleteTrade(userId: string) {
         if (window.confirm("Are you sure to delete this trade?")) {
-            await fetch(
-                `${API_HOST}/trade?token=${
-                    getUrlParams()?.token
-                }&userId=${userId}`
-            );
+            await fetch(`${API_HOST}/trade?token=${getUrlParams()?.token}&userId=${userId}`);
             await this.loadData();
         }
     }
@@ -59,42 +55,23 @@ export class TradePage extends Component<{}, { trades: any; ban: any }> {
                 {Object.keys(this.state.trades).map((k) => {
                     const trade = this.state.trades[k];
                     const value = trade.price * trade.amount;
-                    const valuation =
-                        trade.resourceValuation + trade.buildingValuation;
+                    const valuation = trade.resourceValuation + trade.buildingValuation;
                     const quota = (trade.price * trade.amount) / valuation;
                     return (
                         <tr>
                             <td>{trade.side}</td>
                             <td>{trade.from}</td>
                             <td>{trade.resource}</td>
-                            <td
-                                className={
-                                    trade.amount > 1e12
-                                        ? "red text-right"
-                                        : "text-right"
-                                }
-                            >
+                            <td className={trade.amount > 1e12 ? "red text-right" : "text-right"}>
                                 {trade.amount} ({nf(trade.amount)})
                             </td>
                             <td className="text-right">
                                 {trade.price} ({nf(trade.price)})
                             </td>
-                            <td
-                                className={
-                                    value > 1e15
-                                        ? "text-right red"
-                                        : "text-right"
-                                }
-                            >
+                            <td className={value > 1e15 ? "text-right red" : "text-right"}>
                                 {value} ({nf(value)})
                             </td>
-                            <td
-                                className={
-                                    quota > 0.01
-                                        ? "red text-right"
-                                        : "text-right"
-                                }
-                            >
+                            <td className={quota > 0.01 ? "red text-right" : "text-right"}>
                                 {Math.round(quota * 100 * 100) / 100}%
                             </td>
                             <td className="text-right">
@@ -106,80 +83,31 @@ export class TradePage extends Component<{}, { trades: any; ban: any }> {
                             <td className="text-right">
                                 {trade.cashPerSec} ({nf(trade.cashPerSec)})
                             </td>
+                            <td className="text-right">{trade.buildingCount}</td>
                             <td className="text-right">
-                                {trade.buildingCount}
-                            </td>
-                            <td className="text-right">
-                                {Math.round(
-                                    (Date.now() - trade.createdAt) / 100 / 60
-                                ) / 10}
-                                m ago
+                                {Math.round((Date.now() - trade.createdAt) / 100 / 60) / 10}m ago
                             </td>
                             <td className="nowrap text-right">
                                 <button
-                                    onClick={() =>
-                                        navigator.clipboard.writeText(
-                                            trade.fromUserId
-                                        )
-                                    }
+                                    onClick={() => navigator.clipboard.writeText(trade.fromUserId)}
                                     title={trade.fromIp}
                                 >
                                     Copy
                                 </button>{" "}
-                                <button
-                                    onClick={() =>
-                                        this.banTrande(trade.fromIp, 0)
-                                    }
-                                >
-                                    0
-                                </button>{" "}
-                                <button
-                                    onClick={() =>
-                                        this.banTrande(
-                                            trade.fromIp,
-                                            24 * 60 * 60 * 1000
-                                        )
-                                    }
-                                >
-                                    1d
-                                </button>{" "}
-                                <button
-                                    onClick={() =>
-                                        this.banTrande(
-                                            trade.fromIp,
-                                            7 * 24 * 60 * 60 * 1000
-                                        )
-                                    }
-                                >
+                                <button onClick={() => this.banTrande(trade.fromIp, 0)}>0</button>{" "}
+                                <button onClick={() => this.banTrande(trade.fromIp, 24 * 60 * 60 * 1000)}>1d</button>{" "}
+                                <button onClick={() => this.banTrande(trade.fromIp, 7 * 24 * 60 * 60 * 1000)}>
                                     1w
                                 </button>{" "}
-                                <button
-                                    onClick={() =>
-                                        this.banTrande(
-                                            trade.fromIp,
-                                            30 * 24 * 60 * 60 * 1000
-                                        )
-                                    }
-                                >
+                                <button onClick={() => this.banTrande(trade.fromIp, 30 * 24 * 60 * 60 * 1000)}>
                                     1mo
                                 </button>{" "}
-                                <button
-                                    onClick={() =>
-                                        this.deleteTrade(trade.fromUserId)
-                                    }
-                                >
-                                    Delete
-                                </button>
+                                <button onClick={() => this.deleteTrade(trade.fromUserId)}>Delete</button>
                                 <div class="red bold text-right">
                                     {this.state?.ban?.[trade.fromIp]?.banTrade
                                         ? `${
                                               Math.round(
-                                                  (this.state?.ban?.[
-                                                      trade.fromIp
-                                                  ]?.banTrade -
-                                                      Date.now()) /
-                                                      100 /
-                                                      60
+                                                  (this.state?.ban?.[trade.fromIp]?.banTrade - Date.now()) / 100 / 60
                                               ) / 10
                                           }m Left`
                                         : ""}

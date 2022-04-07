@@ -1,8 +1,8 @@
-import { Component } from "preact";
 import { API_HOST } from "./Constants";
 import { getUrlParams } from "./Helper";
+import { Page } from "./Page";
 
-export class ConfigPage extends Component<{}, { config: string; saving: boolean }> {
+export class ConfigPage extends Page<{ config: string; saving: boolean }> {
     private codeMirror?: CodeMirror.Editor;
 
     constructor() {

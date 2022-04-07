@@ -1,5 +1,5 @@
-import { Component } from "preact";
 import { getUrlParams, nf } from "./Helper";
+import { Page } from "./Page";
 import { TradeDialog } from "./TradeDialog";
 import { UserInfoDialog } from "./UserInfoDialog";
 
@@ -32,20 +32,17 @@ declare global {
     }
 }
 
-export class LeaderboardPage extends Component<
-    {},
-    {
-        leaderboards: {
-            _id: string;
-            _rev: string;
-            updatedAt: number;
-            data: ILeaderboard[];
-        }[];
-        userData: any;
-        userId: string | null;
-        tradeIp: string | null;
-    }
-> {
+export class LeaderboardPage extends Page<{
+    leaderboards: {
+        _id: string;
+        _rev: string;
+        updatedAt: number;
+        data: ILeaderboard[];
+    }[];
+    userData: any;
+    userId: string | null;
+    tradeIp: string | null;
+}> {
     constructor() {
         super();
         this.loadData();

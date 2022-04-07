@@ -1,19 +1,16 @@
-import { Component } from "preact";
 import { getUrlParams, nf } from "./Helper";
+import { Page } from "./Page";
 import { ResourceDialog } from "./ResourceDialog";
 import { TradeDialog } from "./TradeDialog";
 import { UserInfoDialog } from "./UserInfoDialog";
 
-export class AntiCheatPage extends Component<
-    {},
-    {
-        entries: any[];
-        resources: any | null;
-        highlightTime: number;
-        userInfoId: string | null;
-        tradeIp: string | null;
-    }
-> {
+export class AntiCheatPage extends Page<{
+    entries: any[];
+    resources: any | null;
+    highlightTime: number;
+    userInfoId: string | null;
+    tradeIp: string | null;
+}> {
     constructor() {
         super();
         this.loadData();
@@ -81,9 +78,11 @@ export class AntiCheatPage extends Component<
                             const allTimeSwissBefore = entry.before.allPrestigeCurrency;
                             const allTimeSwissAfter = entry.after.allPrestigeCurrency;
                             const valuationDelta = (100 * (valuationAfter - valuationBefore)) / valuationBefore;
+                            const userName =
+                                index === 0 ? <a href={`#user?id=${entry.userId}`}>{entry.before.userName}</a> : null;
                             return (
                                 <tr>
-                                    <td>{index === 0 ? entry.before.userName : ""}</td>
+                                    <td>{userName}</td>
                                     <td>{nf(valuationBefore)}</td>
                                     <td>{nf(valuationAfter)}</td>
                                     <td class={valuationDelta >= 100 ? "red" : ""}>{Math.round(valuationDelta)}%</td>

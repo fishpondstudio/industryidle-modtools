@@ -1,17 +1,15 @@
-import { Component } from "preact";
 import { API_HOST } from "./Constants";
 import { banIp, getUrlParams } from "./Helper";
+import { Page } from "./Page";
 
-export class ChatPage extends Component<{}, { chats: any }> {
+export class ChatPage extends Page<{ chats: any }> {
     constructor() {
         super();
         this.loadData();
     }
 
     async loadData() {
-        const r = await fetch(
-            `${API_HOST}/stat?token=${getUrlParams()?.token}`
-        );
+        const r = await fetch(`${API_HOST}/stat?token=${getUrlParams()?.token}`);
         const j = await r.json();
         this.setState({ chats: j });
     }
@@ -52,74 +50,21 @@ export class ChatPage extends Component<{}, { chats: any }> {
                     return (
                         <tr>
                             <td class="text-right">
-                                [{hasChat[k].message.flag.toUpperCase()}]
-                                {hasChat[k].message.dlc ? "[DLC]" : ""}
+                                [{hasChat[k].message.flag.toUpperCase()}]{hasChat[k].message.dlc ? "[DLC]" : ""}
                             </td>
                             <td>{hasChat[k].message.user}</td>
-                            <td>
-                                {new Date(
-                                    hasChat[k].message.time
-                                ).toLocaleString()}
-                            </td>
+                            <td>{new Date(hasChat[k].message.time).toLocaleString()}</td>
                             <td>{hasChat[k].message.message}</td>
                             <td class="nowrap text-right">
-                                <button
-                                    onClick={() =>
-                                        this.banChat(hasChat[k].ip, 0)
-                                    }
-                                >
-                                    0m
-                                </button>{" "}
-                                <button
-                                    onClick={() =>
-                                        this.banChat(
-                                            hasChat[k].ip,
-                                            5 * 60 * 1000
-                                        )
-                                    }
-                                >
-                                    5m
-                                </button>{" "}
-                                <button
-                                    onClick={() =>
-                                        this.banChat(
-                                            hasChat[k].ip,
-                                            30 * 60 * 1000
-                                        )
-                                    }
-                                >
-                                    30m
-                                </button>{" "}
-                                <button
-                                    onClick={() =>
-                                        this.banChat(
-                                            hasChat[k].ip,
-                                            24 * 60 * 60 * 1000
-                                        )
-                                    }
-                                >
-                                    24h
-                                </button>{" "}
-                                <button
-                                    onClick={() =>
-                                        this.banChat(
-                                            hasChat[k].ip,
-                                            30 * 24 * 60 * 60 * 1000
-                                        )
-                                    }
-                                >
+                                <button onClick={() => this.banChat(hasChat[k].ip, 0)}>0m</button>{" "}
+                                <button onClick={() => this.banChat(hasChat[k].ip, 5 * 60 * 1000)}>5m</button>{" "}
+                                <button onClick={() => this.banChat(hasChat[k].ip, 30 * 60 * 1000)}>30m</button>{" "}
+                                <button onClick={() => this.banChat(hasChat[k].ip, 24 * 60 * 60 * 1000)}>24h</button>{" "}
+                                <button onClick={() => this.banChat(hasChat[k].ip, 30 * 24 * 60 * 60 * 1000)}>
                                     30d
                                 </button>
                                 <div class="red bold">
-                                    {banChat > 0
-                                        ? `${
-                                              Math.round(
-                                                  (banChat - Date.now()) /
-                                                      100 /
-                                                      60
-                                              ) / 10
-                                          }m Left`
-                                        : ""}
+                                    {banChat > 0 ? `${Math.round((banChat - Date.now()) / 100 / 60) / 10}m Left` : ""}
                                 </div>
                             </td>
                         </tr>

@@ -38,7 +38,7 @@ export class UserInfoDialog extends Component<UserInfoDialogProps, { userInfo: a
                             );
                         }}
                     >
-                        Steam ID
+                        Steam:{steamId}
                     </button>{" "}
                 </>
             );
@@ -46,23 +46,24 @@ export class UserInfoDialog extends Component<UserInfoDialogProps, { userInfo: a
         const toolbar = (
             <>
                 <button
-                    onClick={async () => {
-                        this.state.userInfo.optOut = true;
-                        const userId = this.state.userInfo._id;
-                        const r = await fetch(`https://couchdb-de.fishpondstudio.com/industryidle_ticks/${userId}`, {
-                            headers: {
-                                Authorization: `Basic ${btoa(getUrlParams()?.couchdb)}`,
-                                "Content-Type": "application/json",
-                            },
-                            body: JSON.stringify(this.state.userInfo),
-                            method: "put",
+                    onClick={() => {
+                        optInOrOut(this.state.userInfo, true).then((r) => {
+                            alert(r.map((v) => `${v.status} ${v.statusText}`).join(", "));
                         });
-                        fetch(`${API_HOST}/opt-out?token=${getUrlParams()?.token}&userId=${userId}`);
-                        alert(`${r.status} ${r.statusText}`);
                     }}
                     disabled={this.state.userInfo.optOut}
                 >
                     Opt Out
+                </button>{" "}
+                <button
+                    onClick={() => {
+                        optInOrOut(this.state.userInfo, false).then((r) => {
+                            alert(r.map((v) => `${v.status} ${v.statusText}`).join(", "));
+                        });
+                    }}
+                    disabled={!this.state.userInfo.optOut}
+                >
+                    Opt In
                 </button>{" "}
                 <button
                     onClick={() => {
@@ -81,7 +82,7 @@ export class UserInfoDialog extends Component<UserInfoDialogProps, { userInfo: a
                         window.open(`https://iplocation.io/ip/${this.state.userInfo.lastIp}`, "_blank");
                     }}
                 >
-                    IP Location
+                    {this.state.userInfo.lastIp}
                 </button>{" "}
                 {steamButton}
                 <button
@@ -112,4 +113,20 @@ export class UserInfoDialog extends Component<UserInfoDialogProps, { userInfo: a
             </dialog>
         );
     }
+}
+
+export function optInOrOut(userInfo: any, optOut: boolean) {
+    userInfo.optOut = optOut;
+    const userId = userInfo._id;
+    return Promise.all([
+        fetch(`https://couchdb-de.fishpondstudio.com/industryidle_ticks/${userId}`, {
+            headers: {
+                Authorization: `Basic ${btoa(getUrlParams()?.couchdb)}`,
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(userInfo),
+            method: "put",
+        }),
+        fetch(`${API_HOST}/opt-${optOut ? "out" : "in"}?token=${getUrlParams()?.token}&userId=${userId}`),
+    ]);
 }

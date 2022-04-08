@@ -49,15 +49,15 @@ export class UserPage extends Page<{ entries: any[]; user: any }> {
                             );
                         }}
                     >
-                        Steam:{steamId}
-                    </button>
+                        {steamId}
+                    </button>{" "}
                 </>
             );
         }
         return (
             <div className="mobile">
                 <div class="mb10 bold">
-                    {this.state.user.userName} ({this.state.user.dlc}xDLC) {this.state.user.platformId}
+                    {this.state.user.userName} ({this.state.user.dlc}xDLC)
                 </div>
                 <div class="mb10">
                     <button
@@ -88,6 +88,16 @@ export class UserPage extends Page<{ entries: any[]; user: any }> {
                         {this.state.user.lastIp}
                     </button>{" "}
                     {steamButton}
+                    <button
+                        onClick={() => {
+                            window.open(
+                                `https://couchdb-de.fishpondstudio.com/_utils/#database/industryidle_ticks/${this.props.params.id}`,
+                                "_blank"
+                            );
+                        }}
+                    >
+                        CouchDB
+                    </button>{" "}
                 </div>
                 <table>
                     {this.state.entries.map((entry) => {
@@ -113,6 +123,7 @@ export class UserPage extends Page<{ entries: any[]; user: any }> {
                         );
                     })}
                 </table>
+                <pre>{JSON.stringify(this.state.user, null, 4)}</pre>
             </div>
         );
     }
@@ -120,7 +131,7 @@ export class UserPage extends Page<{ entries: any[]; user: any }> {
 
 function diffRow(label: string, before: number, after: number) {
     const delta = before ? Math.round((100 * (after - before)) / before) : 0;
-    if (Math.abs(delta) <= 5) {
+    if (Math.abs(delta) <= 5 || before <= 1e6) {
         return;
     }
     return (

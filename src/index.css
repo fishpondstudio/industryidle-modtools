@@ -123,6 +123,12 @@ pre {
     font-size: 12px;
 }
 
+pre {
+    padding: 10px;
+    background: #333;
+    color: #fff;
+}
+
 .mobile {
     max-width: 600px;
     margin: 0 auto;

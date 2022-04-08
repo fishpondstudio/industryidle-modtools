@@ -54,13 +54,13 @@ export class App extends Component<{}, { page: Routes; params: Record<string, st
                         Trade
                     </a>
                     <a class={this.state.page === ConfigPage ? "active" : ""} href="#config">
-                        Config
+                        CONFIG
                     </a>
                     <a class={this.state.page === LeaderboardPage ? "active" : ""} href="#leaderboard">
-                        Leaderboard
+                        LB
                     </a>
                     <a class={this.state.page === AntiCheatPage ? "active" : ""} href="#anticheat">
-                        Anti-Cheat
+                        AC
                     </a>
                 </div>
                 <this.state.page params={this.state.params} />

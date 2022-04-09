@@ -2,7 +2,7 @@ import { getUrlParams, nf } from "./Helper";
 import { Page } from "./Page";
 import { optInOrOut } from "./UserInfoDialog";
 
-export class UserPage extends Page<{ entries: any[]; user: any }> {
+export class UserPage extends Page<{ entries: any[]; user: any; trades: any[] }> {
     override async componentDidMount() {
         const r = await Promise.all([
             fetch(`https://couchdb-de.fishpondstudio.com/industryidle_anticheat/_find`, {
@@ -26,9 +26,43 @@ export class UserPage extends Page<{ entries: any[]; user: any }> {
                 method: "get",
             }),
         ]);
+        const user = await r[1].json();
         this.setState({
             entries: (await r[0].json()).docs.sort((a: any, b: any) => b.createdAt - a.createdAt),
-            user: await r[1].json(),
+            user: user,
+        });
+        const t = await Promise.all([
+            fetch(`https://couchdb-de.fishpondstudio.com/industryidle_tradelog/_find`, {
+                headers: {
+                    Authorization: `Basic ${btoa(getUrlParams()?.couchdb)}`,
+                    "Content-Type": "application/json",
+                },
+                method: "post",
+                body: JSON.stringify({
+                    selector: {
+                        fillIp: user.lastIp,
+                    },
+                    limit: 999,
+                }),
+            }),
+            fetch(`https://couchdb-de.fishpondstudio.com/industryidle_tradelog/_find`, {
+                headers: {
+                    Authorization: `Basic ${btoa(getUrlParams()?.couchdb)}`,
+                    "Content-Type": "application/json",
+                },
+                method: "post",
+                body: JSON.stringify({
+                    selector: {
+                        fromIp: user.lastIp,
+                    },
+                    limit: 999,
+                }),
+            }),
+        ]);
+        this.setState({
+            trades: (await t[0].json()).docs.concat((await t[1].json()).docs).sort((a: any, b: any) => {
+                return b.closedAt - a.closedAt;
+            }),
         });
     }
 
@@ -54,12 +88,61 @@ export class UserPage extends Page<{ entries: any[]; user: any }> {
                 </>
             );
         }
+        const latestSnapshot = this.state.entries[0].after;
+        let trades = <></>;
+        if (this.state.trades) {
+            trades = (
+                <table class="mt10">
+                    <tr>
+                        <th>Side</th>
+                        <th>Res</th>
+                        <th>Value</th>
+                        <th>From</th>
+                        <th>Fill By</th>
+                        <th>Closed At</th>
+                    </tr>
+                    {this.state.trades.map((trade) => {
+                        return (
+                            <tr>
+                                <td>
+                                    <div class={trade.side === "buy" ? "green bold" : "red bold"}>
+                                        {trade.side.toUpperCase()}
+                                    </div>
+                                    <code>{trade.status.substring(0, 3).toUpperCase()}</code>
+                                </td>
+                                <td>{trade.resource}</td>
+                                <td>
+                                    {nf(trade.price * trade.amount)}
+                                    <br />
+                                    <code>
+                                        ${nf(trade.price)}x{nf(trade.amount)}
+                                    </code>
+                                </td>
+                                <td class={trade.fromIp === this.state.user.lastIp ? "red" : ""}>
+                                    {trade.from}
+                                    <br />
+                                    <code>{trade.fromIp}</code>
+                                </td>
+                                <td class={trade.fillIp === this.state.user.lastIp ? "red" : ""}>
+                                    {trade.fillBy}
+                                    <br />
+                                    <code>{trade.fillIp}</code>
+                                </td>
+                                <td>
+                                    <code>{new Date(trade.closedAt).toLocaleString()}</code>
+                                </td>
+                            </tr>
+                        );
+                    })}
+                </table>
+            );
+        }
         return (
             <div className="mobile">
                 <div class="mb10 bold">
-                    {this.state.user.userName} ({this.state.user.dlc}xDLC)
+                    {latestSnapshot.userName} ({latestSnapshot.dlc}xDLC)
                 </div>
-                <div class="mb10">
+                <div class="buttons">
                     <button
                         onClick={() => {
                             optInOrOut(this.state.user, true).then((r) => {
@@ -123,6 +206,7 @@ export class UserPage extends Page<{ entries: any[]; user: any }> {
                         );
                     })}
                 </table>
+                {trades}
                 <pre>{JSON.stringify(this.state.user, null, 4)}</pre>
             </div>
         );
@@ -139,7 +223,7 @@ function diffRow(label: string, before: number, after: number) {
             <td>{label}</td>
             <td title={String(before)}>{nf(before)}</td>
             <td title={String(after)}>{nf(after)}</td>
-            <td class={delta >= 50 ? "red" : ""}>{delta}%</td>
+            <td class={Math.abs(delta) >= 50 ? "red" : ""}>{delta}%</td>
         </tr>
     );
 }

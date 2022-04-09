@@ -1,6 +1,6 @@
+import { API_HOST } from "./Constants";
 import { getUrlParams, nf } from "./Helper";
 import { Page } from "./Page";
-import { optInOrOut } from "./UserInfoDialog";
 
 export class UserPage extends Page<{ entries: any[]; user: any; trades: any[] }> {
     override async componentDidMount() {
@@ -88,7 +88,6 @@ export class UserPage extends Page<{ entries: any[]; user: any; trades: any[] }>
                 </>
             );
         }
-        const latestSnapshot = this.state.entries[0].after;
         let trades = <></>;
         if (this.state.trades) {
             trades = (
@@ -140,7 +139,7 @@ export class UserPage extends Page<{ entries: any[]; user: any; trades: any[] }>
         return (
             <div className="mobile">
                 <div class="mb10 bold">
-                    {latestSnapshot.userName} ({latestSnapshot.dlc}xDLC)
+                    {this.state.user.userName} ({this.state.user.dlc}xDLC)
                 </div>
                 <div class="buttons">
                     <button
@@ -226,4 +225,20 @@ function diffRow(label: string, before: number, after: number) {
             <td class={Math.abs(delta) >= 50 ? "red" : ""}>{delta}%</td>
         </tr>
     );
+}
+
+function optInOrOut(userInfo: any, optOut: boolean) {
+    userInfo.optOut = optOut;
+    const userId = userInfo._id;
+    return Promise.all([
+        fetch(`https://couchdb-de.fishpondstudio.com/industryidle_ticks/${userId}`, {
+            headers: {
+                Authorization: `Basic ${btoa(getUrlParams()?.couchdb)}`,
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(userInfo),
+            method: "put",
+        }),
+        fetch(`${API_HOST}/opt-${optOut ? "out" : "in"}?token=${getUrlParams()?.token}&userId=${userId}`),
+    ]);
 }

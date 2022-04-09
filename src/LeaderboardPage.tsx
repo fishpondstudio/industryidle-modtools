@@ -1,7 +1,5 @@
 import { getUrlParams, nf } from "./Helper";
 import { Page } from "./Page";
-import { TradeDialog } from "./TradeDialog";
-import { UserInfoDialog } from "./UserInfoDialog";
 
 interface ILeaderboard {
     _id: string;
@@ -112,100 +110,67 @@ export class LeaderboardPage extends Page<{
         });
 
         return (
-            <>
-                <UserInfoDialog userId={this.state.userId}></UserInfoDialog>
-                <TradeDialog ip={this.state.tradeIp} />
-                <table>
-                    <tr>
-                        <th colSpan={2}>
-                            <a
-                                href="https://api.fishpondstudio.com/leaderboard/v4?name=byAllPrestigeCurrency"
-                                target="_blank"
-                            >
-                                Reload
-                            </a>
-                        </th>
-                        {this.state.leaderboards.map((d) => {
-                            return (
-                                <th
-                                    class="text-right pointer"
-                                    onClick={() => {
-                                        if (window.confirm(`Do you want to delete ${d._id} (rev: ${d._rev})`)) {
-                                            this.deleteLeaderboard(d._id, d._rev);
-                                        }
-                                    }}
-                                >
-                                    -{Math.floor((10 * (Date.now() - d.updatedAt)) / (1000 * 60 * 60)) / 10}h
-                                </th>
-                            );
-                        })}
-                    </tr>
-                    {this.state.leaderboards[0].data.map((d) => {
+            <table>
+                <tr>
+                    <th>
+                        <a
+                            href="https://api.fishpondstudio.com/leaderboard/v4?name=byAllPrestigeCurrency"
+                            target="_blank"
+                        >
+                            Reload
+                        </a>
+                    </th>
+                    {this.state.leaderboards.map((d) => {
                         return (
-                            <tr>
-                                <td>
-                                    <button
-                                        onClick={() => {
-                                            this.setState({ userId: d._id, tradeIp: null });
-                                        }}
-                                    >
-                                        User
-                                    </button>{" "}
-                                    <button
-                                        onClick={async () => {
-                                            const r = await fetch(
-                                                `https://couchdb-de.fishpondstudio.com/industryidle_ticks/${d._id}`,
-                                                {
-                                                    headers: {
-                                                        Authorization: `Basic ${btoa(getUrlParams()?.couchdb)}`,
-                                                        "Content-Type": "application/json",
-                                                    },
-                                                    method: "get",
-                                                }
-                                            );
-                                            const j = await r.json();
-                                            if (j.lastIp) {
-                                                this.setState({ userId: null, tradeIp: j.lastIp });
-                                            } else {
-                                                alert("No IP found for this user");
-                                            }
-                                        }}
-                                    >
-                                        Trade
-                                    </button>
-                                </td>
-                                <td class={d.dlc ? "" : "red"}>{d.userName}</td>
-                                {this.state.leaderboards.map((l, index) => {
-                                    const current = idx[index][d._id];
-                                    const prev = idx[index + 1] ? idx[index + 1][d._id] : null;
-                                    return (
-                                        <>
-                                            <td
-                                                title={
-                                                    current
-                                                        ? `Rank: ${nf(current.rank)}, Swiss Money: ${nf(
-                                                              current.allPrestigeCurrency
-                                                          )}`
-                                                        : "N/A"
-                                                }
-                                                class={
-                                                    current &&
-                                                    prev &&
-                                                    Math.abs(current.valuation - prev.valuation) / prev.valuation > 0.1
-                                                        ? "text-right red"
-                                                        : "text-right"
-                                                }
-                                            >
-                                                {current ? nf(current.valuation) : ""}
-                                            </td>
-                                        </>
-                                    );
-                                })}
-                            </tr>
+                            <th
+                                class="text-right pointer"
+                                onClick={() => {
+                                    if (window.confirm(`Do you want to delete ${d._id} (rev: ${d._rev})`)) {
+                                        this.deleteLeaderboard(d._id, d._rev);
+                                    }
+                                }}
+                            >
+                                -{Math.floor((10 * (Date.now() - d.updatedAt)) / (1000 * 60 * 60)) / 10}h
+                            </th>
                         );
                     })}
-                </table>
-            </>
+                </tr>
+                {this.state.leaderboards[0].data.map((d) => {
+                    return (
+                        <tr>
+                            <td class={d.dlc ? "" : "red"}>
+                                <a href={"#user?id=" + d._id}>{d.userName}</a>
+                            </td>
+                            {this.state.leaderboards.map((l, index) => {
+                                const current = idx[index][d._id];
+                                const prev = idx[index + 1] ? idx[index + 1][d._id] : null;
+                                return (
+                                    <>
+                                        <td
+                                            title={
+                                                current
+                                                    ? `Rank: ${nf(current.rank)}, Swiss Money: ${nf(
+                                                          current.allPrestigeCurrency
+                                                      )}`
+                                                    : "N/A"
+                                            }
+                                            class={
+                                                current &&
+                                                prev &&
+                                                Math.abs(current.valuation - prev.valuation) / prev.valuation > 0.1
+                                                    ? "text-right red"
+                                                    : "text-right"
+                                            }
+                                        >
+                                            {current ? nf(current.valuation) : ""}
+                                        </td>
+                                    </>
+                                );
+                            })}
+                        </tr>
+                    );
+                })}
+            </table>
         );
     }
 }

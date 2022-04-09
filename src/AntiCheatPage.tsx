@@ -1,8 +1,5 @@
 import { getUrlParams, nf } from "./Helper";
 import { Page } from "./Page";
-import { ResourceDialog } from "./ResourceDialog";
-import { TradeDialog } from "./TradeDialog";
-import { UserInfoDialog } from "./UserInfoDialog";
 
 export class AntiCheatPage extends Page<{
     entries: any[];
@@ -10,6 +7,7 @@ export class AntiCheatPage extends Page<{
     highlightTime: number;
     userInfoId: string | null;
     tradeIp: string | null;
+    toDelete: any[];
 }> {
     constructor() {
         super();
@@ -31,6 +29,7 @@ export class AntiCheatPage extends Page<{
         });
         const j = await r.json();
         const results: any = {};
+        const toDelete: any[] = [];
         j.docs.forEach((doc: any) => {
             if (results[doc.userId]) {
                 results[doc.userId].entries.push(doc);
@@ -40,11 +39,17 @@ export class AntiCheatPage extends Page<{
             } else {
                 results[doc.userId] = { entries: [doc], createdAt: doc.createdAt };
             }
+            const before = doc.before.resourceValuation + doc.before.buildingValuation;
+            const after = doc.after.resourceValuation + doc.after.buildingValuation;
+            const delta = (after - before) / before;
+            if (delta < 10) {
+                toDelete.push({ _id: doc._id, _rev: doc._rev, _deleted: true });
+            }
         });
         const entries = (Object.values(results) as any).sort((a: any, b: any) => {
             b.createdAt - a.createdAt;
         });
-        this.setState({ entries });
+        this.setState({ entries, toDelete });
     }
 
     render() {
@@ -53,21 +58,32 @@ export class AntiCheatPage extends Page<{
         }
         return (
             <>
-                <ResourceDialog
-                    entries={this.state.resources}
-                    highlightTime={this.state.highlightTime}
-                    onClose={() => this.setState({ resources: null })}
-                />
-                <UserInfoDialog userId={this.state.userInfoId}></UserInfoDialog>
-                <TradeDialog ip={this.state.tradeIp} />
                 <table>
                     <tr>
-                        <th>Name</th>
+                        <th>
+                            <button
+                                onClick={async () => {
+                                    const r = await fetch(
+                                        `https://couchdb-de.fishpondstudio.com/industryidle_anticheat/_bulk_docs?batch=ok`,
+                                        {
+                                            headers: {
+                                                Authorization: `Basic ${btoa(getUrlParams()?.couchdb)}`,
+                                                "Content-Type": "application/json",
+                                            },
+                                            method: "post",
+                                            body: JSON.stringify({ docs: this.state.toDelete }),
+                                        }
+                                    );
+                                    alert(`${r.status} ${r.statusText}`);
+                                }}
+                            >
+                                Clean ({this.state.toDelete.length})
+                            </button>
+                        </th>
                         <th colSpan={3}>Valuation</th>
                         <th colSpan={3}>Swiss</th>
                         <th colSpan={3}>All Time Swiss</th>
                         <th>Created At</th>
-                        <th></th>
                     </tr>
                     {this.state.entries.map((row: any) => {
                         return row.entries.map((entry: any, index: number) => {
@@ -98,44 +114,6 @@ export class AntiCheatPage extends Page<{
                                         %
                                     </td>
                                     <td>{new Date(entry.createdAt).toLocaleString()}</td>
-                                    <td>
-                                        <button
-                                            onClick={() => {
-                                                this.setState({
-                                                    resources: row.entries,
-                                                    highlightTime: entry.createdAt,
-                                                    userInfoId: null,
-                                                    tradeIp: null,
-                                                });
-                                            }}
-                                        >
-                                            Diff
-                                        </button>{" "}
-                                        <button
-                                            onClick={() => {
-                                                this.setState({
-                                                    resources: null,
-                                                    highlightTime: 0,
-                                                    userInfoId: entry.userId,
-                                                    tradeIp: null,
-                                                });
-                                            }}
-                                        >
-                                            User
-                                        </button>{" "}
-                                        <button
-                                            onClick={() => {
-                                                this.setState({
-                                                    resources: null,
-                                                    highlightTime: 0,
-                                                    userInfoId: null,
-                                                    tradeIp: entry.ip,
-                                                });
-                                            }}
-                                        >
-                                            Trades
-                                        </button>
-                                    </td>
                                 </tr>
                             );
                         });

@@ -84,7 +84,7 @@ export class UserPage extends Page<{ entries: any[]; user: any; trades: any[] }>
                         }}
                     >
                         {steamId}
-                    </button>{" "}
+                    </button>
                 </>
             );
         }
@@ -151,7 +151,7 @@ export class UserPage extends Page<{ entries: any[]; user: any; trades: any[] }>
                         disabled={this.state.user.optOut}
                     >
                         Opt Out
-                    </button>{" "}
+                    </button>
                     <button
                         onClick={() => {
                             optInOrOut(this.state.user, false).then((r) => {
@@ -161,15 +161,27 @@ export class UserPage extends Page<{ entries: any[]; user: any; trades: any[] }>
                         disabled={!this.state.user.optOut}
                     >
                         Opt In
-                    </button>{" "}
+                    </button>
                     <button
                         onClick={() => {
                             window.open(`https://iplocation.io/ip/${this.state.user.lastIp}`, "_blank");
                         }}
                     >
                         {this.state.user.lastIp}
-                    </button>{" "}
+                    </button>
                     {steamButton}
+                    <button
+                        onClick={() => {
+                            window.open(
+                                `https://api.fishpondstudio.com/trade-token?userId=${this.props.params.id}&token=${
+                                    getUrlParams()?.token
+                                }`,
+                                "_blank"
+                            );
+                        }}
+                    >
+                        Trade Token
+                    </button>
                     <button
                         onClick={() => {
                             window.open(
@@ -179,7 +191,7 @@ export class UserPage extends Page<{ entries: any[]; user: any; trades: any[] }>
                         }}
                     >
                         CouchDB
-                    </button>{" "}
+                    </button>
                 </div>
                 <table>
                     {this.state.entries.map((entry) => {

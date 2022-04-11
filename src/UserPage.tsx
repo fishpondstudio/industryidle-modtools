@@ -27,12 +27,13 @@ export class UserPage extends Page<{ entries: any[]; user: any; trades: any[] }>
             }),
         ]);
         const user = await r[1].json();
+        const snapshots = (await r[0].json()).docs.sort((a: any, b: any) => b.createdAt - a.createdAt);
         this.setState({
-            entries: (await r[0].json()).docs.sort((a: any, b: any) => b.createdAt - a.createdAt),
+            entries: snapshots,
             user: user,
         });
         const t = await Promise.all([
-            fetch(`https://couchdb-de.fishpondstudio.com/industryidle_tradelog/_find`, {
+            fetch(`https://couchdb-de.fishpondstudio.com/industryidle_trades/_find`, {
                 headers: {
                     Authorization: `Basic ${btoa(getUrlParams()?.couchdb)}`,
                     "Content-Type": "application/json",
@@ -40,12 +41,13 @@ export class UserPage extends Page<{ entries: any[]; user: any; trades: any[] }>
                 method: "post",
                 body: JSON.stringify({
                     selector: {
-                        fillIp: user.lastIp,
+                        fromUserId: this.props.params.id,
+                        status: "closed",
                     },
                     limit: 999,
                 }),
             }),
-            fetch(`https://couchdb-de.fishpondstudio.com/industryidle_tradelog/_find`, {
+            fetch(`https://couchdb-de.fishpondstudio.com/industryidle_trades/_find`, {
                 headers: {
                     Authorization: `Basic ${btoa(getUrlParams()?.couchdb)}`,
                     "Content-Type": "application/json",
@@ -53,7 +55,8 @@ export class UserPage extends Page<{ entries: any[]; user: any; trades: any[] }>
                 method: "post",
                 body: JSON.stringify({
                     selector: {
-                        fromIp: user.lastIp,
+                        fillUserId: this.props.params.id,
+                        status: "filled",
                     },
                     limit: 999,
                 }),
@@ -61,7 +64,7 @@ export class UserPage extends Page<{ entries: any[]; user: any; trades: any[] }>
         ]);
         this.setState({
             trades: (await t[0].json()).docs.concat((await t[1].json()).docs).sort((a: any, b: any) => {
-                return b.closedAt - a.closedAt;
+                return b.timestamp - a.timestamp;
             }),
         });
     }
@@ -98,7 +101,7 @@ export class UserPage extends Page<{ entries: any[]; user: any; trades: any[] }>
                         <th>Value</th>
                         <th>From</th>
                         <th>Fill By</th>
-                        <th>Closed At</th>
+                        <th>Timestamp</th>
                     </tr>
                     {this.state.trades.map((trade) => {
                         return (
@@ -117,18 +120,18 @@ export class UserPage extends Page<{ entries: any[]; user: any; trades: any[] }>
                                         ${nf(trade.price)}x{nf(trade.amount)}
                                     </code>
                                 </td>
-                                <td class={trade.fromIp === this.state.user.lastIp ? "red" : ""}>
+                                <td class={trade.fromUserId === this.props.params.id ? "red" : ""}>
                                     {trade.from}
                                     <br />
                                     <code>{trade.fromIp}</code>
                                 </td>
-                                <td class={trade.fillIp === this.state.user.lastIp ? "red" : ""}>
+                                <td class={trade.fillUserId === this.props.params.id ? "red" : ""}>
                                     {trade.fillBy}
                                     <br />
                                     <code>{trade.fillIp}</code>
                                 </td>
                                 <td>
-                                    <code>{new Date(trade.closedAt).toLocaleString()}</code>
+                                    <code>{new Date(trade.timestamp).toLocaleString()}</code>
                                 </td>
                             </tr>
                         );
@@ -136,6 +139,7 @@ export class UserPage extends Page<{ entries: any[]; user: any; trades: any[] }>
                 </table>
             );
         }
+        const ipAddress = this.state.user.lastIp ?? this.state.entries[0].ip;
         return (
             <div className="mobile">
                 <div class="mb10 bold">
@@ -164,10 +168,10 @@ export class UserPage extends Page<{ entries: any[]; user: any; trades: any[] }>
                     </button>
                     <button
                         onClick={() => {
-                            window.open(`https://iplocation.io/ip/${this.state.user.lastIp}`, "_blank");
+                            window.open(`https://iplocation.io/ip/${ipAddress}`, "_blank");
                         }}
                     >
-                        {this.state.user.lastIp}
+                        {ipAddress}
                     </button>
                     {steamButton}
                     <button

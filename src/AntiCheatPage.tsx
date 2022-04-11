@@ -42,7 +42,7 @@ export class AntiCheatPage extends Page<{
             const before = doc.before.resourceValuation + doc.before.buildingValuation;
             const after = doc.after.resourceValuation + doc.after.buildingValuation;
             const delta = (after - before) / before;
-            if (delta < 10) {
+            if (delta < 100) {
                 toDelete.push({ _id: doc._id, _rev: doc._rev, _deleted: true });
             }
         });

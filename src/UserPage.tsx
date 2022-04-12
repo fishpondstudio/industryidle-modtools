@@ -25,14 +25,6 @@ export class UserPage extends Page<{ entries: any[]; user: any; trades: any[] }>
                 },
                 method: "get",
             }),
-        ]);
-        const user = await r[1].json();
-        const snapshots = (await r[0].json()).docs.sort((a: any, b: any) => b.createdAt - a.createdAt);
-        this.setState({
-            entries: snapshots,
-            user: user,
-        });
-        const t = await Promise.all([
             fetch(`https://couchdb-de.fishpondstudio.com/industryidle_trades/_find`, {
                 headers: {
                     Authorization: `Basic ${btoa(getUrlParams()?.couchdb)}`,
@@ -62,8 +54,16 @@ export class UserPage extends Page<{ entries: any[]; user: any; trades: any[] }>
                 }),
             }),
         ]);
+        let user = await r[1].json();
+        const snapshots = (await r[0].json()).docs.sort((a: any, b: any) => b.createdAt - a.createdAt);
+        // If user is not loaded, show latest snapshot
+        if (user.error) {
+            user = snapshots[0].after;
+        }
         this.setState({
-            trades: (await t[0].json()).docs.concat((await t[1].json()).docs).sort((a: any, b: any) => {
+            entries: snapshots,
+            user: user,
+            trades: (await r[2].json()).docs.concat((await r[3].json()).docs).sort((a: any, b: any) => {
                 return b.timestamp - a.timestamp;
             }),
         });

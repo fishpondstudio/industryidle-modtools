@@ -67,7 +67,9 @@ td {
     white-space: nowrap;
 }
 
-.red {
+.red,
+a.red,
+.red a {
     color: red;
 }
 

@@ -106,7 +106,7 @@ export class UserPage extends Page<{ entries: any[]; user: any; trades: any[] }>
                     </tr>
                     {this.state.trades.map((trade) => {
                         return (
-                            <tr>
+                            <tr onClick={() => console.log(trade)}>
                                 <td>
                                     <div class={trade.side === "buy" ? "green bold" : "red bold"}>
                                         {trade.side.toUpperCase()}
@@ -122,20 +122,12 @@ export class UserPage extends Page<{ entries: any[]; user: any; trades: any[] }>
                                     </code>
                                 </td>
                                 <td class={trade.fromUserId === this.props.params.id ? "red" : ""}>
-                                    {trade.fromUserId === this.props.params.id ? (
-                                        trade.from
-                                    ) : (
-                                        <UserLink id={trade.fromUserId}>{trade.from}</UserLink>
-                                    )}
+                                    <UserLink id={trade.fromUserId}>{trade.from}</UserLink>
                                     <br />
                                     <code>{trade.fromIp}</code>
                                 </td>
                                 <td class={trade.fillUserId === this.props.params.id ? "red" : ""}>
-                                    {trade.fillUserId === this.props.params.id ? (
-                                        trade.fillBy
-                                    ) : (
-                                        <UserLink id={trade.fillUserId}>{trade.fillBy}</UserLink>
-                                    )}
+                                    <UserLink id={trade.fillUserId}>{trade.fillBy}</UserLink>
                                     <br />
                                     <code>{trade.fillIp}</code>
                                 </td>
@@ -238,11 +230,14 @@ export class UserPage extends Page<{ entries: any[]; user: any; trades: any[] }>
 }
 
 interface UserLinkProps {
-    id: string;
+    id: string | null;
     children: ComponentChildren;
 }
 
 function UserLink({ id, children }: UserLinkProps) {
+    if (!id) {
+        return <>{children}</>;
+    }
     return <a href={"#user?id=" + id}>{children}</a>;
 }
 

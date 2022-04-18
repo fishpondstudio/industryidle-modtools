@@ -1,3 +1,4 @@
+import { ComponentChildren } from "preact";
 import { API_HOST } from "./Constants";
 import { getUrlParams, nf } from "./Helper";
 import { Page } from "./Page";
@@ -121,12 +122,20 @@ export class UserPage extends Page<{ entries: any[]; user: any; trades: any[] }>
                                     </code>
                                 </td>
                                 <td class={trade.fromUserId === this.props.params.id ? "red" : ""}>
-                                    {trade.from}
+                                    {trade.fromUserId === this.props.params.id ? (
+                                        trade.from
+                                    ) : (
+                                        <UserLink id={trade.fromUserId}>{trade.from}</UserLink>
+                                    )}
                                     <br />
                                     <code>{trade.fromIp}</code>
                                 </td>
                                 <td class={trade.fillUserId === this.props.params.id ? "red" : ""}>
-                                    {trade.fillBy}
+                                    {trade.fillUserId === this.props.params.id ? (
+                                        trade.fillBy
+                                    ) : (
+                                        <UserLink id={trade.fillUserId}>{trade.fillBy}</UserLink>
+                                    )}
                                     <br />
                                     <code>{trade.fillIp}</code>
                                 </td>
@@ -226,6 +235,15 @@ export class UserPage extends Page<{ entries: any[]; user: any; trades: any[] }>
             </div>
         );
     }
+}
+
+interface UserLinkProps {
+    id: string;
+    children: ComponentChildren;
+}
+
+function UserLink({ id, children }: UserLinkProps) {
+    return <a href={"#user?id=" + id}>{children}</a>;
 }
 
 function diffRow(label: string, before: number, after: number) {

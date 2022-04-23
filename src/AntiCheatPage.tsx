@@ -1,3 +1,4 @@
+import { format } from "date-fns";
 import { getUrlParams, nf } from "./Helper";
 import { Page } from "./Page";
 
@@ -81,7 +82,7 @@ export class AntiCheatPage extends Page<{
                     </th>
                     <th colSpan={3}>Valuation</th>
                     <th colSpan={3}>All Time Swiss</th>
-                    <th>Created At</th>
+                    <th>Time</th>
                 </tr>
                 {this.state.entries.map((row: any) => {
                     return row.entries.map((entry: any, index: number) => {
@@ -103,7 +104,7 @@ export class AntiCheatPage extends Page<{
                                 <td>
                                     {Math.round((100 * (allTimeSwissAfter - allTimeSwissBefore)) / allTimeSwissBefore)}%
                                 </td>
-                                <td>{new Date(entry.createdAt).toLocaleString()}</td>
+                                <td>{format(entry.createdAt, "M.d H.m")}</td>
                             </tr>
                         );
                     });

@@ -52,7 +52,9 @@ export class ChatPage extends Page<{ chats: any }> {
                             <td class="text-right">
                                 [{hasChat[k].message.flag.toUpperCase()}]{hasChat[k].message.dlc ? "[DLC]" : ""}
                             </td>
-                            <td>{hasChat[k].message.user}</td>
+                            <td>
+                                <a href={"#user?id=" + k}>{hasChat[k].message.user}</a>
+                            </td>
                             <td>{new Date(hasChat[k].message.time).toLocaleString()}</td>
                             <td>{hasChat[k].message.message}</td>
                             <td class="nowrap text-right">

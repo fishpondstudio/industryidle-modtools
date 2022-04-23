@@ -57,69 +57,58 @@ export class AntiCheatPage extends Page<{
             return;
         }
         return (
-            <>
-                <table>
-                    <tr>
-                        <th>
-                            <button
-                                onClick={async () => {
-                                    const r = await fetch(
-                                        `https://couchdb-de.fishpondstudio.com/industryidle_anticheat/_bulk_docs?batch=ok`,
-                                        {
-                                            headers: {
-                                                Authorization: `Basic ${btoa(getUrlParams()?.couchdb)}`,
-                                                "Content-Type": "application/json",
-                                            },
-                                            method: "post",
-                                            body: JSON.stringify({ docs: this.state.toDelete }),
-                                        }
-                                    );
-                                    alert(`${r.status} ${r.statusText}`);
-                                }}
-                            >
-                                Clean ({this.state.toDelete.length})
-                            </button>
-                        </th>
-                        <th colSpan={3}>Valuation</th>
-                        <th colSpan={3}>Swiss</th>
-                        <th colSpan={3}>All Time Swiss</th>
-                        <th>Created At</th>
-                    </tr>
-                    {this.state.entries.map((row: any) => {
-                        return row.entries.map((entry: any, index: number) => {
-                            const valuationBefore = entry.before.resourceValuation + entry.before.buildingValuation;
-                            const valuationAfter = entry.after.resourceValuation + entry.after.buildingValuation;
-                            const swissBefore = entry.before.prestigeCurrency;
-                            const swissAfter = entry.after.prestigeCurrency;
-                            const allTimeSwissBefore = entry.before.allPrestigeCurrency;
-                            const allTimeSwissAfter = entry.after.allPrestigeCurrency;
-                            const valuationDelta = (100 * (valuationAfter - valuationBefore)) / valuationBefore;
-                            const userName =
-                                index === 0 ? <a href={`#user?id=${entry.userId}`}>{entry.before.userName}</a> : null;
-                            return (
-                                <tr>
-                                    <td>{userName}</td>
-                                    <td>{nf(valuationBefore)}</td>
-                                    <td>{nf(valuationAfter)}</td>
-                                    <td class={valuationDelta >= 100 ? "red" : ""}>{Math.round(valuationDelta)}%</td>
-                                    <td>{nf(swissBefore)}</td>
-                                    <td>{nf(swissAfter)}</td>
-                                    <td>{Math.round((100 * (swissAfter - swissBefore)) / swissBefore)}%</td>
-                                    <td>{nf(allTimeSwissBefore)}</td>
-                                    <td>{nf(allTimeSwissAfter)}</td>
-                                    <td>
-                                        {Math.round(
-                                            (100 * (allTimeSwissAfter - allTimeSwissBefore)) / allTimeSwissBefore
-                                        )}
-                                        %
-                                    </td>
-                                    <td>{new Date(entry.createdAt).toLocaleString()}</td>
-                                </tr>
-                            );
-                        });
-                    })}
-                </table>
-            </>
+            <table className="mobile">
+                <tr>
+                    <th>
+                        <button
+                            onClick={async () => {
+                                const r = await fetch(
+                                    `https://couchdb-de.fishpondstudio.com/industryidle_anticheat/_bulk_docs?batch=ok`,
+                                    {
+                                        headers: {
+                                            Authorization: `Basic ${btoa(getUrlParams()?.couchdb)}`,
+                                            "Content-Type": "application/json",
+                                        },
+                                        method: "post",
+                                        body: JSON.stringify({ docs: this.state.toDelete }),
+                                    }
+                                );
+                                alert(`${r.status} ${r.statusText}`);
+                            }}
+                        >
+                            Clean ({this.state.toDelete.length})
+                        </button>
+                    </th>
+                    <th colSpan={3}>Valuation</th>
+                    <th colSpan={3}>All Time Swiss</th>
+                    <th>Created At</th>
+                </tr>
+                {this.state.entries.map((row: any) => {
+                    return row.entries.map((entry: any, index: number) => {
+                        const valuationBefore = entry.before.resourceValuation + entry.before.buildingValuation;
+                        const valuationAfter = entry.after.resourceValuation + entry.after.buildingValuation;
+                        const allTimeSwissBefore = entry.before.allPrestigeCurrency;
+                        const allTimeSwissAfter = entry.after.allPrestigeCurrency;
+                        const valuationDelta = (100 * (valuationAfter - valuationBefore)) / valuationBefore;
+                        const userName =
+                            index === 0 ? <a href={`#user?id=${entry.userId}`}>{entry.before.userName}</a> : null;
+                        return (
+                            <tr>
+                                <td>{userName}</td>
+                                <td>{nf(valuationBefore)}</td>
+                                <td>{nf(valuationAfter)}</td>
+                                <td class={valuationDelta >= 10000 ? "red" : ""}>{nf(valuationDelta, 0)}%</td>
+                                <td>{nf(allTimeSwissBefore)}</td>
+                                <td>{nf(allTimeSwissAfter)}</td>
+                                <td>
+                                    {Math.round((100 * (allTimeSwissAfter - allTimeSwissBefore)) / allTimeSwissBefore)}%
+                                </td>
+                                <td>{new Date(entry.createdAt).toLocaleString()}</td>
+                            </tr>
+                        );
+                    });
+                })}
+            </table>
         );
     }
 }

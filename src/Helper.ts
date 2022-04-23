@@ -16,13 +16,16 @@ const NUMBER_SUFFIX_1 = ["", "K", "M", "B", "T", "Qa", "Qt", "Sx", "Sp", "Oc", "
     "NnTg", "Qd", "UQd", "DQd", "TQd", "QaQd", "QtQd", "SxQd", "SpQd", "OcQd", "NnQd", "Qq", "UQq", "DQq", "TQq", "QaQq", "QtQq", "SxQq", "SpQq", "OcQq",
     "NnQq", "Sg"];
 
-export function nf(num: number): string {
+export function nf(num: number, point = 2): string {
+    if (!isFinite(num)) {
+        return "∞";
+    }
     let idx = 0;
     while (Math.abs(num) >= 1000) {
         num /= 1000;
         idx++;
     }
-    num = Math.round(num * 100) / 100;
+    num = Math.round(num * Math.pow(10, point)) / Math.pow(10, point);
     if (idx < NUMBER_SUFFIX_1.length) {
         return num.toLocaleString() + NUMBER_SUFFIX_1[idx];
     }

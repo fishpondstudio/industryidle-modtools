@@ -42,6 +42,11 @@ export class App extends Component<{}, { page: Routes; params: Record<string, st
         this.state = getRoute();
     }
 
+    getRouteKey() {
+        const key = JSON.stringify({ page: this.state.page.name, ...this.state.params });
+        return key;
+    }
+
     render() {
         return (
             <>
@@ -63,7 +68,7 @@ export class App extends Component<{}, { page: Routes; params: Record<string, st
                         AC
                     </a>
                 </div>
-                <this.state.page params={this.state.params} />
+                <this.state.page key={this.getRouteKey()} params={this.state.params} />
             </>
         );
     }

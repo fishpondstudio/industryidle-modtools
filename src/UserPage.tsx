@@ -5,6 +5,29 @@ import { Page } from "./Page";
 
 export class UserPage extends Page<{ entries: any[]; user: any; trades: any[] }> {
     override async componentDidMount() {
+        if (this.props.params.platformId) {
+            fetch(`https://couchdb-de.fishpondstudio.com/industryidle_anticheat/_find`, {
+                headers: {
+                    Authorization: `Basic ${btoa(getUrlParams()?.couchdb)}`,
+                    "Content-Type": "application/json",
+                },
+                method: "post",
+                body: JSON.stringify({
+                    selector: {
+                        platformId: this.props.params.platformId,
+                    },
+                    limit: 1,
+                    sort: [{ createdAt: "desc" }],
+                }),
+            })
+                .then((r) => {
+                    return r.json();
+                })
+                .then((j) => {
+                    window.location.href = `#user?id=${j.docs[0].userId}`;
+                });
+            return;
+        }
         const r = await Promise.all([
             fetch(`https://couchdb-de.fishpondstudio.com/industryidle_anticheat/_find`, {
                 headers: {
@@ -106,7 +129,7 @@ export class UserPage extends Page<{ entries: any[]; user: any; trades: any[] }>
                     </tr>
                     {this.state.trades.map((trade) => {
                         return (
-                            <tr onClick={() => console.log(trade)}>
+                            <tr>
                                 <td>
                                     <div class={trade.side === "buy" ? "green bold" : "red bold"}>
                                         {trade.side.toUpperCase()}

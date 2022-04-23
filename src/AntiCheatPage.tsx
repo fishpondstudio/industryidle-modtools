@@ -42,7 +42,7 @@ export class AntiCheatPage extends Page<{
             const before = doc.before.resourceValuation + doc.before.buildingValuation;
             const after = doc.after.resourceValuation + doc.after.buildingValuation;
             const delta = (after - before) / before;
-            if (delta < 100) {
+            if (delta < 10) {
                 toDelete.push({ _id: doc._id, _rev: doc._rev, _deleted: true });
             }
         });
@@ -97,7 +97,7 @@ export class AntiCheatPage extends Page<{
                                 <td>{userName}</td>
                                 <td>{nf(valuationBefore)}</td>
                                 <td>{nf(valuationAfter)}</td>
-                                <td class={valuationDelta >= 10000 ? "red" : ""}>{nf(valuationDelta, 0)}%</td>
+                                <td class={valuationDelta >= 1000 ? "red" : ""}>{nf(valuationDelta, 0)}%</td>
                                 <td>{nf(allTimeSwissBefore)}</td>
                                 <td>{nf(allTimeSwissAfter)}</td>
                                 <td>

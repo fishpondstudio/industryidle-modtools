@@ -42,7 +42,7 @@ export class ConfigPage extends Page<{ config: string; saving: boolean }> {
             return null;
         }
         return (
-            <>
+            <div className="mobile">
                 <div id="editor"></div>
                 <br />
                 <button
@@ -78,7 +78,7 @@ export class ConfigPage extends Page<{ config: string; saving: boolean }> {
                 >
                     Live Config
                 </button>
-            </>
+            </div>
         );
     }
 }

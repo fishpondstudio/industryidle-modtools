@@ -92,7 +92,12 @@ export class AntiCheatPage extends Page<{
                         const allTimeSwissAfter = entry.after.allPrestigeCurrency;
                         const valuationDelta = (100 * (valuationAfter - valuationBefore)) / valuationBefore;
                         const userName =
-                            index === 0 ? <a href={`#user?id=${entry.userId}`}>{entry.before.userName}</a> : null;
+                            index === 0 ? (
+                                <a href={`#user?id=${entry.userId}`}>
+                                    {entry.before.userName}
+                                    {entry.platformId ? ` [${entry.platformId.charAt(0).toUpperCase()}]` : ""}
+                                </a>
+                            ) : null;
                         return (
                             <tr>
                                 <td>{userName}</td>

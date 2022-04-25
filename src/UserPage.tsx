@@ -172,26 +172,6 @@ export class UserPage extends Page<{ entries: any[]; user: any; trades: any[] }>
                 <div class="buttons">
                     <button
                         onClick={() => {
-                            optInOrOut(this.state.user, true).then((r) => {
-                                alert(r.map((v) => `${v.status} ${v.statusText}`).join(", "));
-                            });
-                        }}
-                        disabled={this.state.user.optOut}
-                    >
-                        Opt Out
-                    </button>
-                    <button
-                        onClick={() => {
-                            optInOrOut(this.state.user, false).then((r) => {
-                                alert(r.map((v) => `${v.status} ${v.statusText}`).join(", "));
-                            });
-                        }}
-                        disabled={!this.state.user.optOut}
-                    >
-                        Opt In
-                    </button>
-                    <button
-                        onClick={() => {
                             window.open(`https://iplocation.io/ip/${ipAddress}`, "_blank");
                         }}
                     >
@@ -219,6 +199,34 @@ export class UserPage extends Page<{ entries: any[]; user: any; trades: any[] }>
                         }}
                     >
                         CouchDB
+                    </button>
+                </div>
+                <div className="buttons">
+                    <button
+                        onClick={() => {
+                            optInOrOut(this.state.user, true).then((r) => {
+                                alert(r.map((v) => `${v.status} ${v.statusText}`).join(", "));
+                            });
+                        }}
+                        disabled={this.state.user.optOut}
+                    >
+                        Opt Out
+                    </button>
+                    <button
+                        onClick={() => {
+                            optInOrOut(this.state.user, false).then((r) => {
+                                alert(r.map((v) => `${v.status} ${v.statusText}`).join(", "));
+                            });
+                        }}
+                        disabled={!this.state.user.optOut}
+                    >
+                        Opt In
+                    </button>
+                    <button onClick={() => this.platformIdBan(true)} disabled={!this.state.user.platformId}>
+                        Ban Platform Id
+                    </button>
+                    <button onClick={() => this.platformIdBan(false)} disabled={!this.state.user.platformId}>
+                        Unban Platform Id
                     </button>
                 </div>
                 <table>
@@ -249,6 +257,17 @@ export class UserPage extends Page<{ entries: any[]; user: any; trades: any[] }>
                 <pre>{JSON.stringify(this.state.user, null, 4)}</pre>
             </div>
         );
+    }
+
+    private platformIdBan(ban: boolean) {
+        fetch(
+            `${API_HOST}/platform-ban?token=${getUrlParams()?.token}&platformId=${encodeURIComponent(
+                this.state.user.platformId
+            )}&comment=${encodeURIComponent(
+                `${ban ? "!" : "~"}${this.state.user.userName}:${this.state.user.lastIp}`
+            )}`,
+            { method: "post" }
+        ).then((r) => alert(`${r.status} ${r.statusText}`));
     }
 }
 

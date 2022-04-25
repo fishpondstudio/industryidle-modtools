@@ -200,8 +200,6 @@ export class UserPage extends Page<{ entries: any[]; user: any; trades: any[] }>
                     >
                         CouchDB
                     </button>
-                </div>
-                <div className="buttons">
                     <button
                         onClick={() => {
                             optInOrOut(this.state.user, true).then((r) => {

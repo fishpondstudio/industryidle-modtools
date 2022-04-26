@@ -3,7 +3,7 @@ import { API_HOST } from "./Constants";
 import { getUrlParams, nf } from "./Helper";
 import { Page } from "./Page";
 
-export class UserPage extends Page<{ entries: any[]; user: any; trades: any[] }> {
+export class UserPage extends Page<{ entries: any[]; user: any; trades: any[]; platformIdBan: string }> {
     override async componentDidMount() {
         if (this.props.params.platformId) {
             fetch(`https://couchdb-de.fishpondstudio.com/industryidle_anticheat/_find`, {
@@ -91,6 +91,17 @@ export class UserPage extends Page<{ entries: any[]; user: any; trades: any[] }>
                 return b.timestamp - a.timestamp;
             }),
         });
+        if (user.platformId) {
+            fetch(
+                `${API_HOST}/platform-ban?token=${getUrlParams()?.token}&platformId=${encodeURIComponent(
+                    user.platformId
+                )}`
+            )
+                .then((r) => r.json())
+                .then((v) => {
+                    this.setState({ platformIdBan: v[user.platformId] });
+                });
+        }
     }
 
     render() {
@@ -104,10 +115,7 @@ export class UserPage extends Page<{ entries: any[]; user: any; trades: any[] }>
                 <>
                     <button
                         onClick={() => {
-                            window.open(
-                                `https://api.fishpondstudio.com/steam/steamid-trusted?steamid=${steamId}`,
-                                "_blank"
-                            );
+                            window.open(`${API_HOST}/steam/steamid-trusted?steamid=${steamId}`, "_blank");
                         }}
                     >
                         {steamId}
@@ -181,9 +189,7 @@ export class UserPage extends Page<{ entries: any[]; user: any; trades: any[] }>
                     <button
                         onClick={() => {
                             window.open(
-                                `https://api.fishpondstudio.com/trade-token?userId=${this.props.params.id}&token=${
-                                    getUrlParams()?.token
-                                }`,
+                                `${API_HOST}/trade-token?userId=${this.props.params.id}&token=${getUrlParams()?.token}`,
                                 "_blank"
                             );
                         }}
@@ -193,7 +199,7 @@ export class UserPage extends Page<{ entries: any[]; user: any; trades: any[] }>
                     <button
                         onClick={() => {
                             window.open(
-                                `https://couchdb-de.fishpondstudio.com/_utils/#database/industryidle_ticks/${this.props.params.id}`,
+                                `${API_HOST}/_utils/#database/industryidle_ticks/${this.props.params.id}`,
                                 "_blank"
                             );
                         }}
@@ -220,10 +226,16 @@ export class UserPage extends Page<{ entries: any[]; user: any; trades: any[] }>
                     >
                         Opt In
                     </button>
-                    <button onClick={() => this.platformIdBan(true)} disabled={!this.state.user.platformId}>
+                    <button
+                        onClick={() => this.platformIdBan(true)}
+                        disabled={!this.state.user.platformId || this.state.platformIdBan?.startsWith("!")}
+                    >
                         Ban Platform Id
                     </button>
-                    <button onClick={() => this.platformIdBan(false)} disabled={!this.state.user.platformId}>
+                    <button
+                        onClick={() => this.platformIdBan(false)}
+                        disabled={!this.state.user.platformId || !this.state.platformIdBan?.startsWith("!")}
+                    >
                         Unban Platform Id
                     </button>
                 </div>

@@ -6,7 +6,7 @@ import { Page } from "./Page";
 export class UserPage extends Page<{ entries: any[]; user: any; trades: any[]; platformIdBan: string }> {
     override async componentDidMount() {
         if (this.props.params.platformId) {
-            fetch(`https://couchdb-de.fishpondstudio.com/industryidle_anticheat/_find`, {
+            fetch(`https://couchdb-de.fishpondstudio.com/industryidle_ticks/_find`, {
                 headers: {
                     Authorization: `Basic ${btoa(getUrlParams()?.couchdb)}`,
                     "Content-Type": "application/json",

@@ -17,14 +17,14 @@ export class UserPage extends Page<{ entries: any[]; user: any; trades: any[]; p
                         platformId: this.props.params.platformId,
                     },
                     limit: 1,
-                    sort: [{ createdAt: "desc" }],
+                    sort: [{ updatedAt: "desc" }],
                 }),
             })
                 .then((r) => {
                     return r.json();
                 })
                 .then((j) => {
-                    window.location.href = `#user?id=${j.docs[0].userId}`;
+                    window.location.href = `#user?id=${j.docs[0]._id}`;
                 });
             return;
         }

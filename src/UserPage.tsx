@@ -199,7 +199,7 @@ export class UserPage extends Page<{ entries: any[]; user: any; trades: any[]; p
                     <button
                         onClick={() => {
                             window.open(
-                                `${API_HOST}/_utils/#database/industryidle_ticks/${this.props.params.id}`,
+                                `https://couchdb-de.fishpondstudio.com/_utils/#database/industryidle_ticks/${this.props.params.id}`,
                                 "_blank"
                             );
                         }}

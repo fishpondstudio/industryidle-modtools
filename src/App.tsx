@@ -3,6 +3,7 @@ import { AntiCheatPage } from "./AntiCheatPage";
 import { ChatPage } from "./ChatPage";
 import { ConfigPage } from "./ConfigPage";
 import { LeaderboardPage } from "./LeaderboardPage";
+import { SearchPage } from "./SearchPage";
 import { TradePage } from "./TradePage";
 import { UserPage } from "./UserPage";
 
@@ -12,7 +13,8 @@ type Routes =
     | typeof TradePage
     | typeof LeaderboardPage
     | typeof AntiCheatPage
-    | typeof UserPage;
+    | typeof UserPage
+    | typeof SearchPage;
 
 export const Routes: Record<string, Routes> = {
     "#chat": ChatPage,
@@ -21,6 +23,7 @@ export const Routes: Record<string, Routes> = {
     "#leaderboard": LeaderboardPage,
     "#anticheat": AntiCheatPage,
     "#user": UserPage,
+    "#search": SearchPage,
 } as const;
 
 export function getRoute() {
@@ -66,6 +69,9 @@ export class App extends Component<{}, { page: Routes; params: Record<string, st
                     </a>
                     <a class={this.state.page === AntiCheatPage ? "active" : ""} href="#anticheat">
                         AC
+                    </a>
+                    <a class={this.state.page === SearchPage ? "active" : ""} href="#search">
+                        Search
                     </a>
                 </div>
                 <this.state.page key={this.getRouteKey()} params={this.state.params} />

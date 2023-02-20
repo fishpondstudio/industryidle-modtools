@@ -375,7 +375,7 @@ export class UserPage extends Page<{ entries: any[]; user: any; trades: any[]; p
                                                         },
                                                         body: JSON.stringify({
                                                             platformId: json.platformId,
-                                                            playerName: sum.name,
+                                                            playerName: this.state.user.userName,
                                                             numberOfTrades: sum.trades.length,
                                                             profit: sum.profit,
                                                         }),

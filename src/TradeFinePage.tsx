@@ -2,12 +2,12 @@ import { API_HOST } from "./Constants";
 import { getUrlParams } from "./Helper";
 import { Page } from "./Page";
 
-export class ConfigPage extends Page<{ config: string; saving: boolean }> {
+export class TradeFinePage extends Page<{ data: string; saving: boolean }> {
     private codeMirror?: CodeMirror.Editor;
 
     constructor() {
         super();
-        fetch(`${API_HOST}/config?token=${getUrlParams()?.token}`)
+        fetch(`${API_HOST}/trade-fine?token=${getUrlParams()?.token}`)
             .then((r) => {
                 if (r.status === 200) {
                     return r.text();
@@ -16,7 +16,7 @@ export class ConfigPage extends Page<{ config: string; saving: boolean }> {
                 }
             })
             .then((j) => {
-                this.setState({ config: j });
+                this.setState({ data: j });
             });
     }
     override componentDidUpdate() {
@@ -26,7 +26,7 @@ export class ConfigPage extends Page<{ config: string; saving: boolean }> {
         const editor = document.getElementById("editor");
         if (editor) {
             this.codeMirror = CodeMirror(editor, {
-                value: this.state.config,
+                value: this.state.data,
                 mode: "application/json",
                 keyMap: "sublime",
                 lineNumbers: true,
@@ -38,7 +38,7 @@ export class ConfigPage extends Page<{ config: string; saving: boolean }> {
         }
     }
     render() {
-        if (!this.state.config) {
+        if (!this.state.data) {
             return null;
         }
         return (
@@ -54,14 +54,12 @@ export class ConfigPage extends Page<{ config: string; saving: boolean }> {
                         }
                         this.setState({ saving: true });
                         try {
-                            await fetch(`${API_HOST}/config?token=${getUrlParams()?.token}`, {
-                                method: "post",
+                            const resp = await fetch(`${API_HOST}/trade-fine?token=${getUrlParams()?.token}`, {
+                                method: "put",
                                 body: this.codeMirror.getValue(),
-                                headers: { "Content-Type": "text/plain" },
+                                headers: { "Content-Type": "application/json" },
                             });
-                            if (confirm("Config saved, open live config?")) {
-                                openLiveConfig();
-                            }
+                            this.setState({ data: await resp.text() });
                         } catch (error) {
                             alert(error);
                         } finally {

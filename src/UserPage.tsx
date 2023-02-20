@@ -366,18 +366,21 @@ export class UserPage extends Page<{ entries: any[]; user: any; trades: any[]; p
                                             );
                                             const json = await resp.json();
                                             if (typeof json.platformId === "string" && json.platformId.length > 0) {
-                                                const resp = await fetch(`${API_HOST}/trade-fine`, {
-                                                    method: "post",
-                                                    headers: {
-                                                        "Content-Type": "application/json",
-                                                    },
-                                                    body: JSON.stringify({
-                                                        platformId: this.state.user.platformId,
-                                                        playerName: sum.name,
-                                                        numberOfTrades: sum.trades.length,
-                                                        profit: sum.profit,
-                                                    }),
-                                                });
+                                                const resp = await fetch(
+                                                    `${API_HOST}/trade-fine?token=${getUrlParams()?.token}`,
+                                                    {
+                                                        method: "post",
+                                                        headers: {
+                                                            "Content-Type": "application/json",
+                                                        },
+                                                        body: JSON.stringify({
+                                                            platformId: json.platformId,
+                                                            playerName: sum.name,
+                                                            numberOfTrades: sum.trades.length,
+                                                            profit: sum.profit,
+                                                        }),
+                                                    }
+                                                );
                                                 alert(resp.status + " " + resp.statusText);
                                             } else {
                                                 alert("PlatformId is not valid");

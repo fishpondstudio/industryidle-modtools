@@ -68,13 +68,6 @@ export class TradeFinePage extends Page<{ data: string; saving: boolean }> {
                     }}
                 >
                     Save
-                </button>{" "}
-                <button
-                    onClick={() => {
-                        openLiveConfig();
-                    }}
-                >
-                    Live Config
                 </button>
             </div>
         );

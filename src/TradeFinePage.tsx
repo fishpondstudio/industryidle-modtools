@@ -59,7 +59,9 @@ export class TradeFinePage extends Page<{ data: string; saving: boolean }> {
                                 body: this.codeMirror.getValue(),
                                 headers: { "Content-Type": "application/json" },
                             });
-                            this.setState({ data: await resp.text() });
+                            const text = await resp.text();
+                            this.setState({ data: text });
+                            this.codeMirror.setValue(text);
                         } catch (error) {
                             alert(error);
                         } finally {

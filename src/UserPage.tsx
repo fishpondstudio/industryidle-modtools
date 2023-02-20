@@ -1,7 +1,19 @@
 import { ComponentChildren } from "preact";
 import { API_HOST } from "./Constants";
-import { getUrlParams, nf } from "./Helper";
+import { getUrlParams, nf, safePush } from "./Helper";
 import { Page } from "./Page";
+
+interface ITransaction {
+    price: number;
+    amount: number;
+}
+
+interface ITradeSum {
+    accumulated: Record<string, ITransaction[]>;
+    trades: any[];
+    name: string;
+    profit: number;
+}
 
 export class UserPage extends Page<{ entries: any[]; user: any; trades: any[]; platformIdBan: string }> {
     override async componentDidMount() {
@@ -101,7 +113,86 @@ export class UserPage extends Page<{ entries: any[]; user: any; trades: any[]; p
             );
         }
         let trades = <></>;
+        const tradeSums: Record<string, ITradeSum> = {};
         if (this.state.trades) {
+            this.state.trades.forEach((t) => {
+                if (t.status !== "filled") {
+                    return;
+                }
+                if (t.fromUserId === this.props.params.id) {
+                    if (!tradeSums[t.fillUserId]) {
+                        tradeSums[t.fillUserId] = { accumulated: {}, name: t.fillBy, trades: [], profit: 0 };
+                    }
+                    tradeSums[t.fillUserId].trades.push(t);
+                    if (t.side === "buy") {
+                        safePush(tradeSums[t.fillUserId].accumulated, t.resource, {
+                            price: t.price,
+                            amount: -t.amount,
+                        });
+                    } else {
+                        safePush(tradeSums[t.fillUserId].accumulated, t.resource, { price: t.price, amount: t.amount });
+                    }
+                }
+                if (t.fillUserId === this.props.params.id) {
+                    if (!tradeSums[t.fromUserId]) {
+                        tradeSums[t.fromUserId] = { accumulated: {}, name: t.from, trades: [], profit: 0 };
+                    }
+                    tradeSums[t.fromUserId].trades.push(t);
+                    if (t.side === "buy") {
+                        safePush(tradeSums[t.fromUserId].accumulated, t.resource, { price: t.price, amount: t.amount });
+                    } else {
+                        safePush(tradeSums[t.fromUserId].accumulated, t.resource, {
+                            price: t.price,
+                            amount: -t.amount,
+                        });
+                    }
+                }
+            });
+            for (const id in tradeSums) {
+                const element = tradeSums[id];
+                for (const res in element.accumulated) {
+                    const trades = element.accumulated[res];
+                    let totalAmountBought = 0;
+                    let totalValueBought = 0;
+                    let totalAmountSold = 0;
+                    let totalValueSold = 0;
+                    trades.forEach((t) => {
+                        if (t.amount > 0) {
+                            totalAmountBought += t.amount;
+                            totalValueBought += t.amount * t.price;
+                        }
+                        if (t.amount < 0) {
+                            totalAmountSold -= t.amount;
+                            totalValueSold -= t.amount * t.price;
+                        }
+                    });
+                    const averagePriceBought = totalAmountBought > 0 ? totalValueBought / totalAmountBought : 0;
+                    const averagePriceSold = totalAmountSold > 0 ? totalValueSold / totalAmountSold : 0;
+                    const netPosition = totalAmountBought - totalAmountSold;
+                    if (averagePriceBought <= 0 || averagePriceSold <= 0) {
+                        continue;
+                    }
+                    // Bought stuff, but at a lower price
+                    if (netPosition > 0 && averagePriceBought < averagePriceSold) {
+                        element.profit += Math.abs((averagePriceSold - averagePriceBought) * netPosition);
+                    }
+                    // Bought stuff, but at a higher price
+                    if (netPosition > 0 && averagePriceBought > averagePriceSold) {
+                        element.profit -= Math.abs((averagePriceSold - averagePriceBought) * netPosition);
+                    }
+                    // Sold stuff, but at a higher price
+                    if (netPosition < 0 && averagePriceSold > averagePriceBought) {
+                        element.profit += Math.abs((averagePriceSold - averagePriceBought) * netPosition);
+                    }
+                    // Sold stuff, but at a lower price
+                    if (netPosition < 0 && averagePriceSold < averagePriceBought) {
+                        element.profit -= Math.abs((averagePriceSold - averagePriceBought) * netPosition);
+                    }
+                }
+                if (element.profit === 0) {
+                    delete tradeSums[id];
+                }
+            }
             trades = (
                 <table class="mt10">
                     <tr>
@@ -237,6 +328,66 @@ export class UserPage extends Page<{ entries: any[]; user: any; trades: any[]; p
                                     entry.after.allPrestigeCurrency + entry.after.allPrestigeCurrency
                                 )}
                             </>
+                        );
+                    })}
+                </table>
+                <table class="mt10">
+                    <tr>
+                        <th>Name</th>
+                        <th colSpan={2}>Profit</th>
+                        <th>Trade #</th>
+                        <th></th>
+                    </tr>
+                    {Object.keys(tradeSums).map((id) => {
+                        const sum = tradeSums[id];
+                        return (
+                            <tr key={id}>
+                                <td>
+                                    <UserLink id={id}>{sum.name}</UserLink>
+                                </td>
+                                <td>
+                                    {nf(sum.profit)}
+                                    <br />
+                                </td>
+                                <td>{sum.profit}</td>
+                                <td>{sum.trades.length}</td>
+                                <td>
+                                    <button
+                                        onClick={async () => {
+                                            const resp = await fetch(
+                                                `https://couchdb-de.fishpondstudio.com/industryidle_ticks/${id}`,
+                                                {
+                                                    headers: {
+                                                        Authorization: `Basic ${btoa(getUrlParams()?.couchdb)}`,
+                                                        "Content-Type": "application/json",
+                                                    },
+                                                    method: "get",
+                                                }
+                                            );
+                                            const json = await resp.json();
+                                            if (typeof json.platformId === "string" && json.platformId.length > 0) {
+                                                const resp = await fetch(`${API_HOST}/trade-fine`, {
+                                                    method: "post",
+                                                    headers: {
+                                                        "Content-Type": "application/json",
+                                                    },
+                                                    body: JSON.stringify({
+                                                        platformId: this.state.user.platformId,
+                                                        playerName: sum.name,
+                                                        numberOfTrades: sum.trades.length,
+                                                        profit: sum.profit,
+                                                    }),
+                                                });
+                                                alert(resp.status + " " + resp.statusText);
+                                            } else {
+                                                alert("PlatformId is not valid");
+                                            }
+                                        }}
+                                    >
+                                        Fine
+                                    </button>
+                                </td>
+                            </tr>
                         );
                     })}
                 </table>

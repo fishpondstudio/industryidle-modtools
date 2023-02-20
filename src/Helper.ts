@@ -39,3 +39,17 @@ export function banIp(type: "banChat" | "banTrade", time: number, ip: Record<str
         )
     );
 }
+
+export function safeAdd<T extends string>(obj: Partial<Record<T, number>>, key: T, valueToAdd: number): void {
+    if (!obj[key]) {
+        obj[key] = 0;
+    }
+    obj[key]! += valueToAdd;
+}
+
+export function safePush<T extends string, K>(obj: Partial<Record<T, K[]>>, key: T, valueToPush: K): void {
+    if (!obj[key]) {
+        obj[key] = [];
+    }
+    obj[key]!.push(valueToPush);
+}

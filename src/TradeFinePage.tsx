@@ -75,7 +75,3 @@ export class TradeFinePage extends Page<{ data: string; saving: boolean }> {
         );
     }
 }
-
-function openLiveConfig() {
-    window.open(`${API_HOST}/config-live?token=${getUrlParams()?.token}`, "_blank");
-}

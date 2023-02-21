@@ -26,9 +26,10 @@ export class SearchPage extends Page<{ search: string; result: any[] }> {
                 <br />
                 <br />
                 {this.state.result.map((f) => {
+                    const userId = f.userId ?? f._id;
                     return (
-                        <a key={f._id} href={`#user?id=${f._id}`}>
-                            {f.userName} / {f.platformId} / {f.lastIp}
+                        <a key={userId} href={`#user?id=${userId}`}>
+                            {f.userName ?? f.after.userName} / {f.platformId} / {f.lastIp ?? f.ip}
                         </a>
                     );
                 })}
@@ -56,8 +57,29 @@ export class SearchPage extends Page<{ search: string; result: any[] }> {
             var j = await resp.json();
             if (j.docs.length > 0) {
                 this.setState({ result: j.docs });
+                return;
             } else {
-                throw new Error("Not found!");
+                if (params.lastIp) {
+                    params.ip = params.lastIp;
+                    delete params.lastIp;
+                }
+                const resp = await fetch(`https://couchdb-de.fishpondstudio.com/industryidle_anticheat/_find`, {
+                    headers: {
+                        Authorization: `Basic ${btoa(getUrlParams()?.couchdb)}`,
+                        "Content-Type": "application/json",
+                    },
+                    method: "post",
+                    body: JSON.stringify({
+                        selector: params,
+                        limit: 1,
+                    }),
+                });
+                var j = await resp.json();
+                if (j.docs.length > 0) {
+                    this.setState({ result: j.docs });
+                } else {
+                    throw new Error("Not Found");
+                }
             }
         } catch (e) {
             alert(e);

@@ -9,7 +9,7 @@ interface ITransaction {
 }
 
 interface ITradeSum {
-    accumulated: Record<string, ITransaction[]>;
+    byResource: Record<string, ITransaction[]>;
     trades: any[];
     name: string;
     profit: number;
@@ -71,7 +71,7 @@ export class UserPage extends Page<{ entries: any[]; user: any; trades: any[]; p
         const snapshots = (await r[0].json()).docs.sort((a: any, b: any) => b.createdAt - a.createdAt);
         // If user is not loaded, show latest snapshot
         if (user.error) {
-            user = snapshots[0].after;
+            user = snapshots[0]?.after;
         }
         this.setState({
             entries: snapshots,
@@ -80,7 +80,7 @@ export class UserPage extends Page<{ entries: any[]; user: any; trades: any[]; p
                 return b.timestamp - a.timestamp;
             }),
         });
-        if (user.platformId) {
+        if (user?.platformId) {
             fetch(
                 `${API_HOST}/platform-ban?token=${getUrlParams()?.token}&platformId=${encodeURIComponent(
                     user.platformId
@@ -94,9 +94,6 @@ export class UserPage extends Page<{ entries: any[]; user: any; trades: any[]; p
     }
 
     render() {
-        if (!this.state.entries || !this.state.user) {
-            return null;
-        }
         let steamButton = null;
         if (this.state.user?.platformId?.startsWith?.("steam:")) {
             const steamId = this.state.user.platformId.split(":")[1];
@@ -112,7 +109,6 @@ export class UserPage extends Page<{ entries: any[]; user: any; trades: any[]; p
                 </>
             );
         }
-        let trades = <></>;
         const tradeSums: Record<string, ITradeSum> = {};
         if (this.state.trades) {
             this.state.trades.forEach((t) => {
@@ -121,27 +117,27 @@ export class UserPage extends Page<{ entries: any[]; user: any; trades: any[]; p
                 }
                 if (t.fromUserId === this.props.params.id) {
                     if (!tradeSums[t.fillUserId]) {
-                        tradeSums[t.fillUserId] = { accumulated: {}, name: t.fillBy, trades: [], profit: 0 };
+                        tradeSums[t.fillUserId] = { byResource: {}, name: t.fillBy, trades: [], profit: 0 };
                     }
                     tradeSums[t.fillUserId].trades.push(t);
                     if (t.side === "buy") {
-                        safePush(tradeSums[t.fillUserId].accumulated, t.resource, {
+                        safePush(tradeSums[t.fillUserId].byResource, t.resource, {
                             price: t.price,
                             amount: -t.amount,
                         });
                     } else {
-                        safePush(tradeSums[t.fillUserId].accumulated, t.resource, { price: t.price, amount: t.amount });
+                        safePush(tradeSums[t.fillUserId].byResource, t.resource, { price: t.price, amount: t.amount });
                     }
                 }
                 if (t.fillUserId === this.props.params.id) {
                     if (!tradeSums[t.fromUserId]) {
-                        tradeSums[t.fromUserId] = { accumulated: {}, name: t.from, trades: [], profit: 0 };
+                        tradeSums[t.fromUserId] = { byResource: {}, name: t.from, trades: [], profit: 0 };
                     }
                     tradeSums[t.fromUserId].trades.push(t);
                     if (t.side === "buy") {
-                        safePush(tradeSums[t.fromUserId].accumulated, t.resource, { price: t.price, amount: t.amount });
+                        safePush(tradeSums[t.fromUserId].byResource, t.resource, { price: t.price, amount: t.amount });
                     } else {
-                        safePush(tradeSums[t.fromUserId].accumulated, t.resource, {
+                        safePush(tradeSums[t.fromUserId].byResource, t.resource, {
                             price: t.price,
                             amount: -t.amount,
                         });
@@ -150,165 +146,127 @@ export class UserPage extends Page<{ entries: any[]; user: any; trades: any[]; p
             });
             for (const id in tradeSums) {
                 const element = tradeSums[id];
-                for (const res in element.accumulated) {
-                    const trades = element.accumulated[res];
+                for (const res in element.byResource) {
+                    const trades = element.byResource[res];
                     let totalAmountBought = 0;
                     let totalValueBought = 0;
                     let totalAmountSold = 0;
                     let totalValueSold = 0;
                     trades.forEach((t) => {
                         if (t.amount > 0) {
-                            totalAmountBought += t.amount;
-                            totalValueBought += t.amount * t.price;
+                            totalAmountBought += Math.abs(t.amount);
+                            totalValueBought += Math.abs(t.amount * t.price);
                         }
                         if (t.amount < 0) {
-                            totalAmountSold -= t.amount;
-                            totalValueSold -= t.amount * t.price;
+                            totalAmountSold += Math.abs(t.amount);
+                            totalValueSold += Math.abs(t.amount * t.price);
                         }
                     });
+                    if (totalAmountBought <= 0 || totalAmountSold <= 0) {
+                        continue;
+                    }
                     const averagePriceBought = totalAmountBought > 0 ? totalValueBought / totalAmountBought : 0;
                     const averagePriceSold = totalAmountSold > 0 ? totalValueSold / totalAmountSold : 0;
                     const netPosition = totalAmountBought - totalAmountSold;
-                    if (averagePriceBought <= 0 || averagePriceSold <= 0) {
-                        continue;
+                    const priceDiff = Math.abs(averagePriceSold - averagePriceBought);
+                    const amountDiff = Math.abs(totalAmountSold - totalAmountBought);
+                    if (
+                        // Bought stuff, but at a lower price
+                        (netPosition > 0 && averagePriceBought < averagePriceSold) ||
+                        // Sold stuff, but at a higher price
+                        (netPosition < 0 && averagePriceSold > averagePriceBought)
+                    ) {
+                        element.profit += priceDiff * amountDiff;
                     }
-                    // Bought stuff, but at a lower price
-                    if (netPosition > 0 && averagePriceBought < averagePriceSold) {
-                        element.profit += Math.abs((averagePriceSold - averagePriceBought) * netPosition);
-                    }
-                    // Bought stuff, but at a higher price
-                    if (netPosition > 0 && averagePriceBought > averagePriceSold) {
-                        element.profit -= Math.abs((averagePriceSold - averagePriceBought) * netPosition);
-                    }
-                    // Sold stuff, but at a higher price
-                    if (netPosition < 0 && averagePriceSold > averagePriceBought) {
-                        element.profit += Math.abs((averagePriceSold - averagePriceBought) * netPosition);
-                    }
-                    // Sold stuff, but at a lower price
-                    if (netPosition < 0 && averagePriceSold < averagePriceBought) {
-                        element.profit -= Math.abs((averagePriceSold - averagePriceBought) * netPosition);
+                    if (
+                        // Bought stuff, but at a higher price
+                        (netPosition > 0 && averagePriceBought > averagePriceSold) ||
+                        // Sold stuff, but at a lower price
+                        (netPosition < 0 && averagePriceSold < averagePriceBought)
+                    ) {
+                        element.profit -= priceDiff * amountDiff;
                     }
                 }
                 if (element.profit === 0) {
                     delete tradeSums[id];
                 }
             }
-            trades = (
-                <table class="mt10">
-                    <tr>
-                        <th>Side</th>
-                        <th>Res</th>
-                        <th>Value</th>
-                        <th>From</th>
-                        <th>Fill By</th>
-                        <th>Timestamp</th>
-                    </tr>
-                    {this.state.trades.map((trade) => {
-                        return (
-                            <tr>
-                                <td>
-                                    <div class={trade.side === "buy" ? "green bold" : "red bold"}>
-                                        {trade.side.toUpperCase()}
-                                    </div>
-                                    <code>{trade.status.substring(0, 3).toUpperCase()}</code>
-                                </td>
-                                <td>{trade.resource}</td>
-                                <td>
-                                    {nf(trade.price * trade.amount)}
-                                    <br />
-                                    <code>
-                                        ${nf(trade.price)}x{nf(trade.amount)}
-                                    </code>
-                                </td>
-                                <td class={trade.fromUserId === this.props.params.id ? "red" : ""}>
-                                    <UserLink id={trade.fromUserId}>{trade.from}</UserLink>
-                                    <br />
-                                    <code>{trade.fromIp}</code>
-                                </td>
-                                <td class={trade.fillUserId === this.props.params.id ? "red" : ""}>
-                                    <UserLink id={trade.fillUserId}>{trade.fillBy}</UserLink>
-                                    <br />
-                                    <code>{trade.fillIp}</code>
-                                </td>
-                                <td>
-                                    <code>{new Date(trade.timestamp).toLocaleString()}</code>
-                                </td>
-                            </tr>
-                        );
-                    })}
-                </table>
-            );
+            console.log(tradeSums);
         }
-        const ipAddress = this.state.user.lastIp ?? this.state.entries[0].ip;
+        const ipAddress = this.state.user?.lastIp ?? this.state.entries?.[0]?.ip ?? "N/A";
         return (
             <div className="mobile">
                 <div class="mb10 bold">
-                    {this.state.user.userName} ({this.state.user.dlc}xDLC)
+                    {this.state.user?.userName ?? "N/A"} ({this.state.user?.dlc ?? 0}xDLC)
                 </div>
-                <div class="buttons">
-                    <button
-                        onClick={() => {
-                            window.open(`https://iplocation.io/ip/${ipAddress}`, "_blank");
-                        }}
-                    >
-                        {ipAddress}
-                    </button>
-                    {steamButton}
-                    <button
-                        onClick={() => {
-                            window.open(
-                                `${API_HOST}/trade-token?userId=${this.props.params.id}&token=${getUrlParams()?.token}`,
-                                "_blank"
-                            );
-                        }}
-                    >
-                        Trade Token
-                    </button>
-                    <button
-                        onClick={() => {
-                            window.open(
-                                `https://couchdb-de.fishpondstudio.com/_utils/#database/industryidle_ticks/${this.props.params.id}`,
-                                "_blank"
-                            );
-                        }}
-                    >
-                        CouchDB
-                    </button>
-                    <button
-                        onClick={() => {
-                            optInOrOut(this.state.user, true).then((r) => {
-                                alert(r.map((v) => `${v.status} ${v.statusText}`).join(", "));
-                            });
-                        }}
-                        disabled={this.state.user.optOut}
-                    >
-                        Opt Out
-                    </button>
-                    <button
-                        onClick={() => {
-                            optInOrOut(this.state.user, false).then((r) => {
-                                alert(r.map((v) => `${v.status} ${v.statusText}`).join(", "));
-                            });
-                        }}
-                        disabled={!this.state.user.optOut}
-                    >
-                        Opt In
-                    </button>
-                    <button
-                        onClick={() => this.platformIdBan(true)}
-                        disabled={!this.state.user.platformId || this.state.platformIdBan?.startsWith("!")}
-                    >
-                        Ban Platform Id
-                    </button>
-                    <button
-                        onClick={() => this.platformIdBan(false)}
-                        disabled={!this.state.user.platformId || !this.state.platformIdBan?.startsWith("!")}
-                    >
-                        Unban Platform Id
-                    </button>
-                </div>
+                {this.state.user ? (
+                    <div class="buttons">
+                        <button
+                            onClick={() => {
+                                window.open(`https://iplocation.io/ip/${ipAddress}`, "_blank");
+                            }}
+                        >
+                            {ipAddress}
+                        </button>
+                        {steamButton}
+                        <button
+                            onClick={() => {
+                                window.open(
+                                    `${API_HOST}/trade-token?userId=${this.props.params.id}&token=${
+                                        getUrlParams()?.token
+                                    }`,
+                                    "_blank"
+                                );
+                            }}
+                        >
+                            Trade Token
+                        </button>
+                        <button
+                            onClick={() => {
+                                window.open(
+                                    `https://couchdb-de.fishpondstudio.com/_utils/#database/industryidle_ticks/${this.props.params.id}`,
+                                    "_blank"
+                                );
+                            }}
+                        >
+                            CouchDB
+                        </button>
+                        <button
+                            onClick={() => {
+                                optInOrOut(this.state.user, true).then((r) => {
+                                    alert(r.map((v) => `${v.status} ${v.statusText}`).join(", "));
+                                });
+                            }}
+                            disabled={this.state.user.optOut}
+                        >
+                            Opt Out
+                        </button>
+                        <button
+                            onClick={() => {
+                                optInOrOut(this.state.user, false).then((r) => {
+                                    alert(r.map((v) => `${v.status} ${v.statusText}`).join(", "));
+                                });
+                            }}
+                            disabled={!this.state.user.optOut}
+                        >
+                            Opt In
+                        </button>
+                        <button
+                            onClick={() => this.platformIdBan(true)}
+                            disabled={!this.state.user.platformId || this.state.platformIdBan?.startsWith("!")}
+                        >
+                            Ban Platform Id
+                        </button>
+                        <button
+                            onClick={() => this.platformIdBan(false)}
+                            disabled={!this.state.user.platformId || !this.state.platformIdBan?.startsWith("!")}
+                        >
+                            Unban Platform Id
+                        </button>
+                    </div>
+                ) : null}
                 <table>
-                    {this.state.entries.map((entry) => {
+                    {this.state.entries?.map((entry) => {
                         return (
                             <>
                                 <tr>
@@ -394,7 +352,49 @@ export class UserPage extends Page<{ entries: any[]; user: any; trades: any[]; p
                         );
                     })}
                 </table>
-                {trades}
+                <table class="mt10">
+                    <tr>
+                        <th>Side</th>
+                        <th>Res</th>
+                        <th>Value</th>
+                        <th>From</th>
+                        <th>Fill By</th>
+                        <th>Timestamp</th>
+                    </tr>
+                    {this.state.trades?.map((trade) => {
+                        return (
+                            <tr>
+                                <td>
+                                    <div class={trade.side === "buy" ? "green bold" : "red bold"}>
+                                        {trade.side.toUpperCase()}
+                                    </div>
+                                    <code>{trade.status.substring(0, 3).toUpperCase()}</code>
+                                </td>
+                                <td>{trade.resource}</td>
+                                <td>
+                                    {nf(trade.price * trade.amount)}
+                                    <br />
+                                    <code>
+                                        ${nf(trade.price)}x{nf(trade.amount)}
+                                    </code>
+                                </td>
+                                <td class={trade.fromUserId === this.props.params.id ? "red" : ""}>
+                                    <UserLink id={trade.fromUserId}>{trade.from}</UserLink>
+                                    <br />
+                                    <code>{trade.fromIp}</code>
+                                </td>
+                                <td class={trade.fillUserId === this.props.params.id ? "red" : ""}>
+                                    <UserLink id={trade.fillUserId}>{trade.fillBy}</UserLink>
+                                    <br />
+                                    <code>{trade.fillIp}</code>
+                                </td>
+                                <td>
+                                    <code>{new Date(trade.timestamp).toLocaleString()}</code>
+                                </td>
+                            </tr>
+                        );
+                    })}
+                </table>
                 <pre>{JSON.stringify(this.state.user, null, 4)}</pre>
             </div>
         );

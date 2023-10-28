@@ -197,7 +197,7 @@ export class UserPage extends Page<{
       }
       const ipAddress = this.state.user?.lastIp ?? this.state.entries?.[0]?.ip ?? "N/A";
       return (
-         <div className="mobile">
+         <div class="mobile">
             <div class="mb10 bold">
                {this.state.user?.userName ?? "N/A"} ({this.state.user?.dlc ?? 0}xDLC)
             </div>

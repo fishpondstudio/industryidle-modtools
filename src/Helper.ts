@@ -10,6 +10,10 @@ export function getUrlParams(): Record<string, string> {
    return result;
 }
 
+export const ONE_DAY = 24 * 60 * 60 * 1000;
+export const ONE_HOUR = 60 * 60 * 1000;
+export const ONE_MINUTE = 60 * 1000;
+
 // prettier-ignore
 const NUMBER_SUFFIX_1 = ["", "K", "M", "B", "T", "Qa", "Qt", "Sx", "Sp", "Oc", "Nn", "Dc", "UDc", "DDc", "TDc", "QaDc", "QtDc", "SxDc", "SpDc", "ODc",
     "NDc", "Vi", "UVi", "DVi", "TVi", "QaVi", "QtVi", "SxVi", "SpVi", "OcVi", "NnVi", "Tg", "UTg", "DTg", "TTg", "QaTg", "QtTg", "SxTg", "SpTg", "OcTg",
@@ -35,8 +39,8 @@ export function nf(num: number, point = 2): string {
 export function banIp(type: "banChat" | "banTrade", time: number, ip: Record<string, number>): Promise<Response[]> {
    return Promise.all(
       Object.keys(ip).map((ip) =>
-         fetch(`${API_HOST}/stat?token=${getUrlParams()?.token}&ip=${ip}&${type}=${time}&update`),
-      ),
+         fetch(`${API_HOST}/stat?token=${getUrlParams()?.token}&ip=${ip}&${type}=${time}&update`)
+      )
    );
 }
 

@@ -87,12 +87,14 @@ export class BetaPage extends Page<{
                         <td class="text-right">
                            <button
                               onClick={() => {
-                                 navigator.clipboard.writeText("https://cividle.com/alpha.html?key=" + k._id);
+                                 addDays(3);
+                                 navigator.clipboard.writeText(
+                                    `Hi, Thanks for signing up for CivIdle playtest. Here's your key: https://cividle.com/alpha.html?key=${k._id} The link will expire in 3 days - you need to redeem your key before that!`
+                                 );
                               }}
                            >
                               Copy
                            </button>{" "}
-                           <button onClick={addDays.bind(null, 3)}>+3d</button>{" "}
                            <button onClick={addDays.bind(null, 7)}>+7d</button>{" "}
                            <button
                               onClick={async () => {

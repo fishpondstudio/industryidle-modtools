@@ -61,6 +61,23 @@ export class BetaPage extends Page<{
                   </td>
                </tr>
                {this.state.keys?.map((k) => {
+                  const addDays = async (n: number) => {
+                     k.validUntil = Date.now() + n * ONE_DAY;
+                     const r = await fetch(`https://couchdb-de.fishpondstudio.com/cividle_keys/${k._id}`, {
+                        headers: {
+                           Authorization: `Basic ${btoa(getUrlParams()?.couchdb)}`,
+                           "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify(k),
+                        method: "put",
+                     });
+                     if (r.status < 300) {
+                        this.componentDidMount();
+                     } else {
+                        alert(r.status + " " + r.statusText);
+                     }
+                  };
+
                   return (
                      <tr>
                         <td>
@@ -75,26 +92,8 @@ export class BetaPage extends Page<{
                            >
                               Copy
                            </button>{" "}
-                           <button
-                              onClick={async () => {
-                                 k.validUntil = Date.now() + 7 * ONE_DAY;
-                                 const r = await fetch(`https://couchdb-de.fishpondstudio.com/cividle_keys/${k._id}`, {
-                                    headers: {
-                                       Authorization: `Basic ${btoa(getUrlParams()?.couchdb)}`,
-                                       "Content-Type": "application/json",
-                                    },
-                                    body: JSON.stringify(k),
-                                    method: "put",
-                                 });
-                                 if (r.status < 300) {
-                                    this.componentDidMount();
-                                 } else {
-                                    alert(r.status + " " + r.statusText);
-                                 }
-                              }}
-                           >
-                              +7d
-                           </button>{" "}
+                           <button onClick={addDays.bind(null, 3)}>+3d</button>{" "}
+                           <button onClick={addDays.bind(null, 7)}>+7d</button>{" "}
                            <button
                               onClick={async () => {
                                  const r = await fetch(

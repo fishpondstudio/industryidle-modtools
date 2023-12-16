@@ -62,7 +62,9 @@ export class ChatPage extends Page<{ chats: any }> {
                         <button onClick={() => this.banChat(hasChat[k].ip, 5 * 60 * 1000)}>5m</button>{" "}
                         <button onClick={() => this.banChat(hasChat[k].ip, 30 * 60 * 1000)}>30m</button>{" "}
                         <button onClick={() => this.banChat(hasChat[k].ip, 24 * 60 * 60 * 1000)}>24h</button>{" "}
-                        <button onClick={() => this.banChat(hasChat[k].ip, 30 * 24 * 60 * 60 * 1000)}>30d</button>
+                        <button onClick={() => this.banChat(hasChat[k].ip, 30 * 24 * 60 * 60 * 1000)}>
+                           30d
+                        </button>
                         <div class="red bold">
                            {banChat > 0 ? `${Math.round((banChat - Date.now()) / 100 / 60) / 10}m Left` : ""}
                         </div>

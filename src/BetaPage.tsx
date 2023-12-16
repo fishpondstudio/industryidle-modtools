@@ -7,13 +7,16 @@ export class BetaPage extends Page<{
    addKey: string;
 }> {
    override async componentDidMount() {
-      const r = await fetch(`https://couchdb-de.fishpondstudio.com/cividle_keys/_all_docs?include_docs=true`, {
-         headers: {
-            Authorization: `Basic ${btoa(getUrlParams()?.couchdb)}`,
-            "Content-Type": "application/json",
+      const r = await fetch(
+         "https://couchdb-de.fishpondstudio.com/cividle_keys/_all_docs?include_docs=true",
+         {
+            headers: {
+               Authorization: `Basic ${btoa(getUrlParams()?.couchdb)}`,
+               "Content-Type": "application/json",
+            },
+            method: "get",
          },
-         method: "get",
-      });
+      );
       const { rows } = await r.json();
       this.setState({ keys: rows.map((r: any) => r.doc) });
    }
@@ -21,45 +24,43 @@ export class BetaPage extends Page<{
    override render() {
       return (
          <div class="mobile">
+            <textarea
+               value={this.state.addKey}
+               onInput={(e) => this.setState({ addKey: (e.target as HTMLInputElement).value })}
+               type="text"
+               style="width:100%;resize:vertical;"
+               rows={5}
+            />
+            <button
+               onClick={async () => {
+                  const keys = this.state.addKey.split("\n");
+                  const docs = {
+                     docs: keys.map((k) => ({
+                        key: k.trim(),
+                        validUntil: Date.now() + 7 * ONE_DAY,
+                     })),
+                  };
+                  const r = await fetch("https://couchdb-de.fishpondstudio.com/cividle_keys/_bulk_docs", {
+                     headers: {
+                        Authorization: `Basic ${btoa(getUrlParams()?.couchdb)}`,
+                        "Content-Type": "application/json",
+                     },
+                     body: JSON.stringify(docs),
+                     method: "post",
+                  });
+                  if (r.status < 300) {
+                     this.componentDidMount();
+                     this.setState({ addKey: "" });
+                  } else {
+                     alert(`${r.status} ${r.statusText}`);
+                  }
+               }}
+            >
+               Add
+            </button>
+            <br />
+            <br />
             <table>
-               <tr>
-                  <th>Key</th>
-                  <th>Valid Until</th>
-                  <th></th>
-               </tr>
-               <tr>
-                  <td>
-                     <input
-                        value={this.state.addKey}
-                        onInput={(e) => this.setState({ addKey: (e.target as HTMLInputElement).value })}
-                        type="text"
-                        style="width:100%"
-                     />
-                  </td>
-                  <td></td>
-                  <td class="text-right">
-                     <button
-                        onClick={async () => {
-                           const r = await fetch(`https://couchdb-de.fishpondstudio.com/cividle_keys`, {
-                              headers: {
-                                 Authorization: `Basic ${btoa(getUrlParams()?.couchdb)}`,
-                                 "Content-Type": "application/json",
-                              },
-                              body: JSON.stringify({ key: this.state.addKey, validUntil: Date.now() + 7 * ONE_DAY }),
-                              method: "post",
-                           });
-                           if (r.status < 300) {
-                              this.componentDidMount();
-                              this.setState({ addKey: "" });
-                           } else {
-                              alert(r.status + " " + r.statusText);
-                           }
-                        }}
-                     >
-                        Add
-                     </button>
-                  </td>
-               </tr>
                {this.state.keys?.map((k) => {
                   const addDays = async (n: number) => {
                      k.validUntil = Date.now() + n * ONE_DAY;
@@ -74,14 +75,14 @@ export class BetaPage extends Page<{
                      if (r.status < 300) {
                         this.componentDidMount();
                      } else {
-                        alert(r.status + " " + r.statusText);
+                        alert(`${r.status} ${r.statusText}`);
                      }
                   };
 
                   return (
                      <tr>
                         <td>
-                           <a href={"https://cividle.com/alpha.html?key=" + k._id}>{k.key}</a>
+                           <a href={`https://cividle.com/alpha.html?key=${k._id}`}>{k.key}</a>
                         </td>
                         <td>{format(k.validUntil, "M.d H.m")}</td>
                         <td class="text-right">
@@ -89,7 +90,7 @@ export class BetaPage extends Page<{
                               onClick={() => {
                                  addDays(3);
                                  navigator.clipboard.writeText(
-                                    `Hi, Thanks for signing up for CivIdle playtest. Here's your key: https://cividle.com/alpha.html?key=${k._id} The link will expire in 3 days - you need to redeem your key before that!`
+                                    `Hi, Thanks for signing up for CivIdle playtest. Here's your key: https://cividle.com/alpha.html?key=${k._id} The link will expire in 3 days - you need to redeem your key before that!`,
                                  );
                               }}
                            >
@@ -106,12 +107,12 @@ export class BetaPage extends Page<{
                                           "Content-Type": "application/json",
                                        },
                                        method: "delete",
-                                    }
+                                    },
                                  );
                                  if (r.status < 300) {
                                     this.componentDidMount();
                                  } else {
-                                    alert(r.status + " " + r.statusText);
+                                    alert(`${r.status} ${r.statusText}`);
                                  }
                               }}
                            >
@@ -122,6 +123,16 @@ export class BetaPage extends Page<{
                   );
                })}
             </table>
+            <br />
+            <button
+               onClick={() => {
+                  navigator.clipboard.writeText(
+                     this.state.keys.map((k) => `https://cividle.com/alpha.html?key=${k._id}`).join("\n"),
+                  );
+               }}
+            >
+               Copy All links
+            </button>
          </div>
       );
    }
